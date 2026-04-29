@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { ArrowLeft, Upload, Trash2 } from "lucide-react";
+import { ArrowLeft, Upload, Trash2, Sparkles } from "lucide-react";
 
 const WineForm = () => {
   const { id } = useParams();
@@ -19,6 +19,7 @@ const WineForm = () => {
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
 
   const [form, setForm] = useState({
     name: "", winery: "", vintage: "", grape_variety: "", region: "",
@@ -43,6 +44,44 @@ const WineForm = () => {
     })();
   }, [id, user, isEdit, navigate]);
 
+  const fileToBase64 = (file: File): Promise<string> => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      resolve(result.split(",")[1]);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+  const analyzeImage = async (file: File) => {
+    setAnalyzing(true);
+    try {
+      const base64 = await fileToBase64(file);
+      const { data, error } = await supabase.functions.invoke("analyze-wine-label", {
+        body: { image_base64: base64, media_type: file.type || "image/jpeg" },
+      });
+      if (error) throw error;
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
+      setForm(f => ({
+        ...f,
+        name: data.name || f.name,
+        winery: data.winery ?? f.winery,
+        vintage: data.vintage ? String(data.vintage) : f.vintage,
+        grape_variety: data.grape_variety ?? f.grape_variety,
+        region: data.region ?? f.region,
+      }));
+      toast.success("Wein erkannt – Felder ausgefüllt");
+    } catch (e: any) {
+      toast.error(e.message || "Erkennung fehlgeschlagen");
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
@@ -55,6 +94,8 @@ const WineForm = () => {
     setForm(f => ({ ...f, photo_url: data.publicUrl }));
     setUploading(false);
     toast.success("Foto hochgeladen");
+    // Auto-analyze label
+    analyzeImage(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -101,16 +142,25 @@ const WineForm = () => {
           <h1 className="serif text-3xl font-semibold mb-6">{isEdit ? "Wein bearbeiten" : "Neuer Wein"}</h1>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label>Foto</Label>
-              <div className="mt-1 flex items-center gap-3">
+              <Label>Foto vom Etikett</Label>
+              <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-accent" /> Claude erkennt den Wein automatisch
+              </p>
+              <div className="flex items-center gap-3">
                 {form.photo_url && (
                   <img src={form.photo_url} alt="Wein" className="w-20 h-20 object-cover rounded-md border border-border" />
                 )}
                 <label className="flex-1">
-                  <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
+                  <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" disabled={uploading || analyzing} />
                   <div className="border border-dashed border-border rounded-md p-4 text-center cursor-pointer hover:border-primary/50 transition">
-                    <Upload className="w-5 h-5 mx-auto mb-1 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">{uploading ? "Lädt..." : "Foto hochladen"}</span>
+                    {analyzing ? (
+                      <Sparkles className="w-5 h-5 mx-auto mb-1 text-accent animate-pulse" />
+                    ) : (
+                      <Upload className="w-5 h-5 mx-auto mb-1 text-muted-foreground" />
+                    )}
+                    <span className="text-sm text-muted-foreground">
+                      {uploading ? "Lädt hoch..." : analyzing ? "Etikett wird analysiert..." : "Foto hochladen"}
+                    </span>
                   </div>
                 </label>
               </div>
