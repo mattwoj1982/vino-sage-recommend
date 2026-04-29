@@ -142,16 +142,25 @@ const WineForm = () => {
           <h1 className="serif text-3xl font-semibold mb-6">{isEdit ? "Wein bearbeiten" : "Neuer Wein"}</h1>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label>Foto</Label>
-              <div className="mt-1 flex items-center gap-3">
+              <Label>Foto vom Etikett</Label>
+              <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-accent" /> Claude erkennt den Wein automatisch
+              </p>
+              <div className="flex items-center gap-3">
                 {form.photo_url && (
                   <img src={form.photo_url} alt="Wein" className="w-20 h-20 object-cover rounded-md border border-border" />
                 )}
                 <label className="flex-1">
-                  <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
+                  <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" disabled={uploading || analyzing} />
                   <div className="border border-dashed border-border rounded-md p-4 text-center cursor-pointer hover:border-primary/50 transition">
-                    <Upload className="w-5 h-5 mx-auto mb-1 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">{uploading ? "Lädt..." : "Foto hochladen"}</span>
+                    {analyzing ? (
+                      <Sparkles className="w-5 h-5 mx-auto mb-1 text-accent animate-pulse" />
+                    ) : (
+                      <Upload className="w-5 h-5 mx-auto mb-1 text-muted-foreground" />
+                    )}
+                    <span className="text-sm text-muted-foreground">
+                      {uploading ? "Lädt hoch..." : analyzing ? "Etikett wird analysiert..." : "Foto hochladen"}
+                    </span>
                   </div>
                 </label>
               </div>
