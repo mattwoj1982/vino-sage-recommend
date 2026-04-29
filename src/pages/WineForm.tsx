@@ -63,7 +63,11 @@ const WineForm = () => {
       });
       if (error) throw error;
       if (data?.error) {
-        toast.error(data.error);
+        if (data.fallback) {
+          toast.info(`${data.error}. Du kannst die Felder manuell ausfüllen.`);
+        } else {
+          toast.error(data.error);
+        }
         return;
       }
       setForm(f => ({
