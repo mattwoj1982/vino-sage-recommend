@@ -5,18 +5,25 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const jsonResponse = (body: Record<string, unknown>, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
+const fallbackResponse = (message = "Bilderkennung ist momentan nicht verfügbar") =>
+  jsonResponse({ error: message, fallback: true });
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
-    if (!ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY ist nicht konfiguriert");
+    if (!ANTHROPIC_API_KEY) return fallbackResponse("Claude API-Key ist nicht konfiguriert");
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Nicht autorisiert" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Nicht autorisiert" }, 401);
     }
 
     const supabase = createClient(
@@ -26,20 +33,29 @@ Deno.serve(async (req) => {
     const token = authHeader.replace("Bearer ", "");
     const { data: { user } } = await supabase.auth.getUser(token);
     if (!user) {
-      return new Response(JSON.stringify({ error: "Nicht autorisiert" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Nicht autorisiert" }, 401);
     }
 
-    const { image_url, image_base64, media_type } = await req.json();
+    let body: { image_url?: unknown; image_base64?: unknown; media_type?: unknown };
+    try {
+      body = await req.json();
+    } catch {
+      return jsonResponse({ error: "Ungültige Anfrage" }, 400);
+    }
+
+    const image_url = typeof body.image_url === "string" ? body.image_url : undefined;
+    const image_base64 = typeof body.image_base64 === "string" ? body.image_base64 : undefined;
+    const media_type = typeof body.media_type === "string" ? body.media_type : "image/jpeg";
+
     if (!image_url && !image_base64) {
-      return new Response(JSON.stringify({ error: "Bild fehlt" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Bild fehlt" }, 400);
+    }
+    if (image_base64 && image_base64.length > 28_000_000) {
+      return jsonResponse({ error: "Bild ist zu groß" }, 400);
     }
 
     const imageSource = image_base64
-      ? { type: "base64", media_type: media_type || "image/jpeg", data: image_base64 }
+      ? { type: "base64", media_type, data: image_base64 }
       : { type: "url", url: image_url };
 
     const systemPrompt = `Du bist ein Wein-Experte, der Weinetiketten analysiert. Extrahiere die Informationen vom Etikett und gib AUSSCHLIESSLICH ein gültiges JSON-Objekt zurück, ohne Erklärungen, ohne Markdown, ohne Code-Block-Markierungen.
@@ -79,9 +95,10 @@ Wenn ein Feld nicht erkennbar ist, setze null. Wenn KEIN Wein/Weinetikett erkenn
     if (!response.ok) {
       const t = await response.text();
       console.error("Anthropic error:", response.status, t);
-      return new Response(JSON.stringify({ error: "Fehler bei der Bilderkennung" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      const userMessage = t.includes("credit balance is too low")
+        ? "Claude-Bilderkennung ist aktuell nicht verfügbar, weil das API-Guthaben aufgebraucht ist"
+        : "Fehler bei der Bilderkennung";
+      return fallbackResponse(userMessage);
     }
 
     const data = await response.json();
@@ -91,18 +108,12 @@ Wenn ein Feld nicht erkennbar ist, setze null. Wenn KEIN Wein/Weinetikett erkenn
       const cleaned = text.replace(/```json\s*|\s*```/g, "").trim();
       parsed = JSON.parse(cleaned);
     } catch {
-      return new Response(JSON.stringify({ error: "Antwort konnte nicht gelesen werden" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return fallbackResponse("Antwort konnte nicht gelesen werden");
     }
 
-    return new Response(JSON.stringify(parsed), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse(parsed);
   } catch (e) {
     console.error("analyze-wine-label error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unbekannter Fehler" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return fallbackResponse(e instanceof Error ? e.message : "Unbekannter Fehler");
   }
 });
