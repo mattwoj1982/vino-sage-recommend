@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { ArrowLeft, Upload, Trash2 } from "lucide-react";
+import { ArrowLeft, Upload, Trash2, Sparkles } from "lucide-react";
 
 const WineForm = () => {
   const { id } = useParams();
@@ -19,6 +19,7 @@ const WineForm = () => {
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
 
   const [form, setForm] = useState({
     name: "", winery: "", vintage: "", grape_variety: "", region: "",
@@ -43,6 +44,44 @@ const WineForm = () => {
     })();
   }, [id, user, isEdit, navigate]);
 
+  const fileToBase64 = (file: File): Promise<string> => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      resolve(result.split(",")[1]);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+  const analyzeImage = async (file: File) => {
+    setAnalyzing(true);
+    try {
+      const base64 = await fileToBase64(file);
+      const { data, error } = await supabase.functions.invoke("analyze-wine-label", {
+        body: { image_base64: base64, media_type: file.type || "image/jpeg" },
+      });
+      if (error) throw error;
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
+      setForm(f => ({
+        ...f,
+        name: data.name || f.name,
+        winery: data.winery ?? f.winery,
+        vintage: data.vintage ? String(data.vintage) : f.vintage,
+        grape_variety: data.grape_variety ?? f.grape_variety,
+        region: data.region ?? f.region,
+      }));
+      toast.success("Wein erkannt – Felder ausgefüllt");
+    } catch (e: any) {
+      toast.error(e.message || "Erkennung fehlgeschlagen");
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
@@ -55,6 +94,8 @@ const WineForm = () => {
     setForm(f => ({ ...f, photo_url: data.publicUrl }));
     setUploading(false);
     toast.success("Foto hochgeladen");
+    // Auto-analyze label
+    analyzeImage(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
