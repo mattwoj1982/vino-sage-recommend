@@ -14,13 +14,129 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      share_links: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string | null
+          token: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string | null
+          token?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string | null
+          token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wines: {
+        Row: {
+          bottle_count: number
+          created_at: string
+          grape_variety: string | null
+          id: string
+          name: string
+          notes: string | null
+          photo_url: string | null
+          rating: number | null
+          region: string | null
+          updated_at: string
+          user_id: string
+          vintage: number | null
+          winery: string | null
+        }
+        Insert: {
+          bottle_count?: number
+          created_at?: string
+          grape_variety?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          photo_url?: string | null
+          rating?: number | null
+          region?: string | null
+          updated_at?: string
+          user_id: string
+          vintage?: number | null
+          winery?: string | null
+        }
+        Update: {
+          bottle_count?: number
+          created_at?: string
+          grape_variety?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          photo_url?: string | null
+          rating?: number | null
+          region?: string | null
+          updated_at?: string
+          user_id?: string
+          vintage?: number | null
+          winery?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_share_owner_name: { Args: { share_token: string }; Returns: string }
+      get_shared_wines: {
+        Args: { share_token: string }
+        Returns: {
+          bottle_count: number
+          created_at: string
+          grape_variety: string | null
+          id: string
+          name: string
+          notes: string | null
+          photo_url: string | null
+          rating: number | null
+          region: string | null
+          updated_at: string
+          user_id: string
+          vintage: number | null
+          winery: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "wines"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
     }
     Enums: {
       [_ in never]: never
