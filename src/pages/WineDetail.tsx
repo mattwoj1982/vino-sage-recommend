@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Edit, Wine as WineIcon, Sparkles, UtensilsCrossed, CalendarRange } from "lucide-react";
 import { toast } from "sonner";
 import { getDrinkStatus, drinkStatusLabel, drinkStatusEmoji } from "@/lib/drinkWindow";
+import { pairingCategoryEmoji } from "@/lib/pairingCategories";
 
 const WineDetail = () => {
   const { id } = useParams();
