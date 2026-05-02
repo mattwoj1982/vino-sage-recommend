@@ -71,6 +71,7 @@ export type Database = {
           id: string
           name: string
           notes: string | null
+          pairing_categories: string[] | null
           photo_url: string | null
           rating: number | null
           region: string | null
@@ -90,6 +91,7 @@ export type Database = {
           id?: string
           name: string
           notes?: string | null
+          pairing_categories?: string[] | null
           photo_url?: string | null
           rating?: number | null
           region?: string | null
@@ -109,6 +111,7 @@ export type Database = {
           id?: string
           name?: string
           notes?: string | null
+          pairing_categories?: string[] | null
           photo_url?: string | null
           rating?: number | null
           region?: string | null
@@ -138,6 +141,7 @@ export type Database = {
           id: string
           name: string
           notes: string | null
+          pairing_categories: string[] | null
           photo_url: string | null
           rating: number | null
           region: string | null
