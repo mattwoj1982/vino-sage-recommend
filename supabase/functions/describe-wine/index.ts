@@ -49,7 +49,25 @@ Deno.serve(async (req) => {
       wine.region && `Region: ${wine.region}`,
     ].filter(Boolean).join("\n");
 
-    const systemPrompt = `Du bist ein Sommelier. Liefere für den angegebenen Wein eine kurze, ansprechende Beschreibung (Stil, Aromen, Charakter), eine konkrete Speisen-Empfehlung und ein realistisches Trinkfenster (Jahre).
+    const PAIRING_CATEGORIES = [
+      "Rotes Fleisch",
+      "Geflügel",
+      "Wild",
+      "Fisch & Meeresfrüchte",
+      "Pasta & Pizza",
+      "Käse",
+      "Vegetarisch",
+      "Würzige Küche",
+      "Dessert",
+      "Apéro / Solo",
+    ];
+
+    const systemPrompt = `Du bist ein Sommelier. Liefere für den angegebenen Wein:
+- eine kurze, ansprechende Beschreibung (Stil, Aromen, Charakter)
+- konkrete Speisen-Empfehlungen als Fließtext (z.B. "Geschmortes Rind, gereifter Hartkäse, Wildragout")
+- 1-3 passende Kategorien aus der vorgegebenen Liste (für Filterung)
+- ein realistisches Trinkfenster (Jahre)
+
 Nutze AUSSCHLIESSLICH das Tool "wine_profile" — kein Freitext.`;
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -75,7 +93,14 @@ Nutze AUSSCHLIESSLICH das Tool "wine_profile" — kein Freitext.`;
               },
               food_pairing: {
                 type: "string",
-                description: "2-4 konkrete Gerichte, durch Komma getrennt oder als kurzer Fließtext. Auf Deutsch.",
+                description: "2-4 konkrete Gerichte oder Speise-Beispiele als kurzer Fließtext. Auf Deutsch.",
+              },
+              pairing_categories: {
+                type: "array",
+                items: { type: "string", enum: PAIRING_CATEGORIES },
+                minItems: 1,
+                maxItems: 3,
+                description: "1-3 passende Kategorien aus der Liste — für Filterung im Weinkeller.",
               },
               drink_from: {
                 type: "integer",
@@ -86,7 +111,7 @@ Nutze AUSSCHLIESSLICH das Tool "wine_profile" — kein Freitext.`;
                 description: "Bestes Trinkfenster Ende (Jahr, z.B. 2032).",
               },
             },
-            required: ["description", "food_pairing", "drink_from", "drink_to"],
+            required: ["description", "food_pairing", "pairing_categories", "drink_from", "drink_to"],
           },
         }],
         tool_choice: { type: "tool", name: "wine_profile" },
