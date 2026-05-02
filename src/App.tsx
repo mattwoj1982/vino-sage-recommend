@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
 import Cellar from "./pages/Cellar";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import WineForm from "./pages/WineForm";
 import WineDetail from "./pages/WineDetail";
 import Recommend from "./pages/Recommend";
@@ -26,6 +27,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Cellar />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/wine/new" element={<WineForm />} />
             <Route path="/wine/:id" element={<WineDetail />} />
             <Route path="/wine/:id/edit" element={<WineForm />} />

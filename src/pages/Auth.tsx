@@ -18,6 +18,20 @@ const Auth = () => {
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast.error("Bitte gib zuerst deine E-Mail-Adresse ein");
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setLoading(false);
+    if (error) toast.error(error.message);
+    else toast.success("Reset-Link versendet! Schau in dein E-Mail-Postfach.");
+  };
+
   useEffect(() => {
     if (user) navigate("/");
   }, [user, navigate]);
@@ -84,6 +98,13 @@ const Auth = () => {
                 <Button type="submit" disabled={loading} className="w-full bg-bordeaux-gradient hover:opacity-90 transition shadow-glow">
                   {loading ? "Anmelden..." : "Anmelden"}
                 </Button>
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="w-full text-sm text-muted-foreground hover:text-foreground transition underline-offset-4 hover:underline"
+                >
+                  Passwort vergessen?
+                </button>
               </form>
             </TabsContent>
 
