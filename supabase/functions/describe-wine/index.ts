@@ -70,6 +70,7 @@ Deno.serve(async (req) => {
 - konkrete Speisen-Empfehlungen als Fließtext (z.B. "Geschmortes Rind, gereifter Hartkäse, Wildragout")
 - 1-3 passende Kategorien aus der vorgegebenen Liste (für Filterung)
 - ein realistisches Trinkfenster (Jahre)
+- eine realistische Preisspanne in EUR (Endkundenpreis pro 0,75l-Flasche im Fachhandel)
 
 Nutze AUSSCHLIESSLICH das Tool "wine_profile" — kein Freitext.`;
 
