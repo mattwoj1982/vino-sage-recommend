@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Search, Wine as WineIcon, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { getDrinkStatus, type DrinkStatus } from "@/lib/drinkWindow";
+import { PAIRING_CATEGORIES, pairingCategoryEmoji } from "@/lib/pairingCategories";
 
 interface Wine {
   id: string;
@@ -23,6 +24,7 @@ interface Wine {
   bottle_count: number;
   drink_from: number | null;
   drink_to: number | null;
+  pairing_categories: string[] | null;
 }
 
 const Cellar = () => {
