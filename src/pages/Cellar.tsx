@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Search, Wine as WineIcon, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { getDrinkStatus, type DrinkStatus } from "@/lib/drinkWindow";
+import { PAIRING_CATEGORIES, pairingCategoryEmoji } from "@/lib/pairingCategories";
 
 interface Wine {
   id: string;
@@ -23,6 +24,7 @@ interface Wine {
   bottle_count: number;
   drink_from: number | null;
   drink_to: number | null;
+  pairing_categories: string[] | null;
 }
 
 const Cellar = () => {
@@ -35,6 +37,7 @@ const Cellar = () => {
   const [region, setRegion] = useState("all");
   const [vintage, setVintage] = useState("all");
   const [drinkWindow, setDrinkWindow] = useState<"all" | DrinkStatus>("all");
+  const [pairing, setPairing] = useState("all");
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -45,10 +48,10 @@ const Cellar = () => {
     (async () => {
       const { data, error } = await supabase
         .from("wines")
-        .select("id, name, winery, vintage, grape_variety, region, rating, photo_url, bottle_count, drink_from, drink_to")
+        .select("id, name, winery, vintage, grape_variety, region, rating, photo_url, bottle_count, drink_from, drink_to, pairing_categories")
         .order("created_at", { ascending: false });
       if (error) toast.error(error.message);
-      else setWines(data ?? []);
+      else setWines((data as Wine[]) ?? []);
       setLoading(false);
     })();
   }, [user]);
@@ -64,8 +67,9 @@ const Cellar = () => {
     if (region !== "all" && w.region !== region) return false;
     if (vintage !== "all" && String(w.vintage) !== vintage) return false;
     if (drinkWindow !== "all" && getDrinkStatus(w.drink_from, w.drink_to) !== drinkWindow) return false;
+    if (pairing !== "all" && !(w.pairing_categories ?? []).includes(pairing)) return false;
     return true;
-  }), [wines, search, grape, region, vintage, drinkWindow]);
+  }), [wines, search, grape, region, vintage, drinkWindow, pairing]);
 
   if (authLoading) return null;
 
@@ -88,7 +92,7 @@ const Cellar = () => {
               className="pl-10 bg-card/50"
             />
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
             <Select value={grape} onValueChange={setGrape}>
               <SelectTrigger className="bg-card/50"><SelectValue placeholder="Rebsorte" /></SelectTrigger>
               <SelectContent>
@@ -118,6 +122,15 @@ const Cellar = () => {
                 <SelectItem value="wait">⏳ Noch warten</SelectItem>
                 <SelectItem value="past">⌛ Höhepunkt überschritten</SelectItem>
                 <SelectItem value="unknown">❓ Unbekannt</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={pairing} onValueChange={setPairing}>
+              <SelectTrigger className="bg-card/50"><SelectValue placeholder="Speise" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Speisen</SelectItem>
+                {PAIRING_CATEGORIES.map(c => (
+                  <SelectItem key={c} value={c}>{pairingCategoryEmoji[c]} {c}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
