@@ -37,6 +37,7 @@ const Cellar = () => {
   const [region, setRegion] = useState("all");
   const [vintage, setVintage] = useState("all");
   const [drinkWindow, setDrinkWindow] = useState<"all" | DrinkStatus>("all");
+  const [pairing, setPairing] = useState("all");
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -47,10 +48,10 @@ const Cellar = () => {
     (async () => {
       const { data, error } = await supabase
         .from("wines")
-        .select("id, name, winery, vintage, grape_variety, region, rating, photo_url, bottle_count, drink_from, drink_to")
+        .select("id, name, winery, vintage, grape_variety, region, rating, photo_url, bottle_count, drink_from, drink_to, pairing_categories")
         .order("created_at", { ascending: false });
       if (error) toast.error(error.message);
-      else setWines(data ?? []);
+      else setWines((data as Wine[]) ?? []);
       setLoading(false);
     })();
   }, [user]);
@@ -66,8 +67,9 @@ const Cellar = () => {
     if (region !== "all" && w.region !== region) return false;
     if (vintage !== "all" && String(w.vintage) !== vintage) return false;
     if (drinkWindow !== "all" && getDrinkStatus(w.drink_from, w.drink_to) !== drinkWindow) return false;
+    if (pairing !== "all" && !(w.pairing_categories ?? []).includes(pairing)) return false;
     return true;
-  }), [wines, search, grape, region, vintage, drinkWindow]);
+  }), [wines, search, grape, region, vintage, drinkWindow, pairing]);
 
   if (authLoading) return null;
 
