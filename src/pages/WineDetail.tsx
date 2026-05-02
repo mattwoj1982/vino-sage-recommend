@@ -7,7 +7,7 @@ import { StarRating } from "@/components/StarRating";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Edit, Wine as WineIcon, Sparkles, UtensilsCrossed, CalendarRange } from "lucide-react";
+import { ArrowLeft, Edit, Wine as WineIcon, Sparkles, UtensilsCrossed, CalendarRange, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { getDrinkStatus, drinkStatusLabel, drinkStatusEmoji } from "@/lib/drinkWindow";
 import { pairingCategoryEmoji } from "@/lib/pairingCategories";
