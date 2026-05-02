@@ -120,6 +120,15 @@ const WineDetail = () => {
                   <UtensilsCrossed className="w-5 h-5 text-primary" /> Speisen-Empfehlung
                 </h2>
                 <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">{wine.food_pairing}</p>
+                {wine.pairing_categories?.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {wine.pairing_categories.map((c: string) => (
+                      <Badge key={c} variant="outline" className="border-primary/40">
+                        {pairingCategoryEmoji[c] ?? "🍽️"} {c}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
