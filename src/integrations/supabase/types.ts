@@ -73,6 +73,8 @@ export type Database = {
           notes: string | null
           pairing_categories: string[] | null
           photo_url: string | null
+          price_max: number | null
+          price_min: number | null
           rating: number | null
           region: string | null
           updated_at: string
@@ -93,6 +95,8 @@ export type Database = {
           notes?: string | null
           pairing_categories?: string[] | null
           photo_url?: string | null
+          price_max?: number | null
+          price_min?: number | null
           rating?: number | null
           region?: string | null
           updated_at?: string
@@ -113,6 +117,8 @@ export type Database = {
           notes?: string | null
           pairing_categories?: string[] | null
           photo_url?: string | null
+          price_max?: number | null
+          price_min?: number | null
           rating?: number | null
           region?: string | null
           updated_at?: string
@@ -143,6 +149,8 @@ export type Database = {
           notes: string | null
           pairing_categories: string[] | null
           photo_url: string | null
+          price_max: number | null
+          price_min: number | null
           rating: number | null
           region: string | null
           updated_at: string
