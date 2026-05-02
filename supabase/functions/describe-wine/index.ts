@@ -70,6 +70,7 @@ Deno.serve(async (req) => {
 - konkrete Speisen-Empfehlungen als Fließtext (z.B. "Geschmortes Rind, gereifter Hartkäse, Wildragout")
 - 1-3 passende Kategorien aus der vorgegebenen Liste (für Filterung)
 - ein realistisches Trinkfenster (Jahre)
+- eine realistische Preisspanne in EUR (Endkundenpreis pro 0,75l-Flasche im Fachhandel)
 
 Nutze AUSSCHLIESSLICH das Tool "wine_profile" — kein Freitext.`;
 
@@ -113,8 +114,16 @@ Nutze AUSSCHLIESSLICH das Tool "wine_profile" — kein Freitext.`;
                 type: "integer",
                 description: "Bestes Trinkfenster Ende (Jahr, z.B. 2032).",
               },
+              price_min: {
+                type: "number",
+                description: "Realistischer Mindestpreis in EUR pro 0,75l-Flasche im Fachhandel.",
+              },
+              price_max: {
+                type: "number",
+                description: "Realistischer Höchstpreis in EUR pro 0,75l-Flasche im Fachhandel.",
+              },
             },
-            required: ["description", "food_pairing", "pairing_categories", "drink_from", "drink_to"],
+            required: ["description", "food_pairing", "pairing_categories", "drink_from", "drink_to", "price_min", "price_max"],
           },
         }],
         tool_choice: { type: "tool", name: "wine_profile" },
@@ -135,14 +144,14 @@ Nutze AUSSCHLIESSLICH das Tool "wine_profile" — kein Freitext.`;
     const toolUse = data.content?.find((c: any) => c.type === "tool_use");
     if (!toolUse?.input) return json({ error: "Keine Antwort von Claude" }, 502);
 
-    const { description, food_pairing, pairing_categories, drink_from, drink_to } = toolUse.input;
+    const { description, food_pairing, pairing_categories, drink_from, drink_to, price_min, price_max } = toolUse.input;
     const safeCategories = Array.isArray(pairing_categories)
       ? pairing_categories.filter((c: unknown) => typeof c === "string")
       : [];
 
     const { error: updateErr } = await supabase
       .from("wines")
-      .update({ description, food_pairing, pairing_categories: safeCategories, drink_from, drink_to })
+      .update({ description, food_pairing, pairing_categories: safeCategories, drink_from, drink_to, price_min, price_max })
       .eq("id", wine_id)
       .eq("user_id", user.id);
 
@@ -151,7 +160,7 @@ Nutze AUSSCHLIESSLICH das Tool "wine_profile" — kein Freitext.`;
       return json({ error: "Speichern fehlgeschlagen" }, 500);
     }
 
-    return json({ description, food_pairing, pairing_categories: safeCategories, drink_from, drink_to });
+    return json({ description, food_pairing, pairing_categories: safeCategories, drink_from, drink_to, price_min, price_max });
   } catch (e) {
     console.error("describe-wine error:", e);
     return json({ error: e instanceof Error ? e.message : "Unbekannter Fehler" }, 500);

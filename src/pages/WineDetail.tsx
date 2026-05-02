@@ -7,7 +7,7 @@ import { StarRating } from "@/components/StarRating";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Edit, Wine as WineIcon, Sparkles, UtensilsCrossed, CalendarRange } from "lucide-react";
+import { ArrowLeft, Edit, Wine as WineIcon, Sparkles, UtensilsCrossed, CalendarRange, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { getDrinkStatus, drinkStatusLabel, drinkStatusEmoji } from "@/lib/drinkWindow";
 import { pairingCategoryEmoji } from "@/lib/pairingCategories";
@@ -101,6 +101,20 @@ const WineDetail = () => {
                 </h2>
                 <p className="text-muted-foreground">
                   {wine.drink_from ?? "?"} – {wine.drink_to ?? "?"}
+                </p>
+              </div>
+            )}
+
+            {(wine.price_min != null || wine.price_max != null) && (
+              <div className="mt-6 pt-6 border-t border-border">
+                <h2 className="serif text-xl font-semibold mb-2 flex items-center gap-2">
+                  <Tag className="w-5 h-5 text-primary" /> Preisspanne
+                </h2>
+                <p className="text-muted-foreground">
+                  {wine.price_min != null && wine.price_max != null
+                    ? `€ ${Number(wine.price_min).toFixed(2)} – € ${Number(wine.price_max).toFixed(2)}`
+                    : `ca. € ${Number(wine.price_min ?? wine.price_max).toFixed(2)}`}
+                  <span className="text-xs ml-2 opacity-70">(geschätzt, pro 0,75l)</span>
                 </p>
               </div>
             )}
