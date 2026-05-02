@@ -63,6 +63,10 @@ export type Database = {
         Row: {
           bottle_count: number
           created_at: string
+          description: string | null
+          drink_from: number | null
+          drink_to: number | null
+          food_pairing: string | null
           grape_variety: string | null
           id: string
           name: string
@@ -78,6 +82,10 @@ export type Database = {
         Insert: {
           bottle_count?: number
           created_at?: string
+          description?: string | null
+          drink_from?: number | null
+          drink_to?: number | null
+          food_pairing?: string | null
           grape_variety?: string | null
           id?: string
           name: string
@@ -93,6 +101,10 @@ export type Database = {
         Update: {
           bottle_count?: number
           created_at?: string
+          description?: string | null
+          drink_from?: number | null
+          drink_to?: number | null
+          food_pairing?: string | null
           grape_variety?: string | null
           id?: string
           name?: string
@@ -118,6 +130,10 @@ export type Database = {
         Returns: {
           bottle_count: number
           created_at: string
+          description: string | null
+          drink_from: number | null
+          drink_to: number | null
+          food_pairing: string | null
           grape_variety: string | null
           id: string
           name: string

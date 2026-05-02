@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Wine as WineIcon, Star } from "lucide-react";
+import { getDrinkStatus, drinkStatusEmoji, drinkStatusLabel } from "@/lib/drinkWindow";
 
 interface WineCardProps {
   wine: {
@@ -13,11 +14,14 @@ interface WineCardProps {
     rating: number | null;
     photo_url: string | null;
     bottle_count: number;
+    drink_from?: number | null;
+    drink_to?: number | null;
   };
   basePath?: string;
 }
 
 export const WineCard = ({ wine, basePath = "/wine" }: WineCardProps) => {
+  const status = getDrinkStatus(wine.drink_from, wine.drink_to);
   return (
     <Link to={`${basePath}/${wine.id}`}>
       <Card className="overflow-hidden border-border/50 bg-card/70 backdrop-blur hover:border-primary/50 hover:shadow-glow transition-all duration-300 group h-full">
@@ -32,6 +36,14 @@ export const WineCard = ({ wine, basePath = "/wine" }: WineCardProps) => {
           <div className="absolute top-2 right-2 bg-background/80 backdrop-blur px-2 py-1 rounded-md text-xs font-medium">
             {wine.bottle_count} 🍾
           </div>
+          {status !== "unknown" && (
+            <div
+              className="absolute top-2 left-2 bg-background/80 backdrop-blur px-2 py-1 rounded-md text-xs font-medium"
+              title={drinkStatusLabel[status]}
+            >
+              {drinkStatusEmoji[status]}
+            </div>
+          )}
         </div>
         <div className="p-4">
           <h3 className="serif text-xl font-semibold text-foreground line-clamp-1">{wine.name}</h3>
