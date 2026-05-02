@@ -92,7 +92,7 @@ const Cellar = () => {
               className="pl-10 bg-card/50"
             />
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
             <Select value={grape} onValueChange={setGrape}>
               <SelectTrigger className="bg-card/50"><SelectValue placeholder="Rebsorte" /></SelectTrigger>
               <SelectContent>
@@ -122,6 +122,15 @@ const Cellar = () => {
                 <SelectItem value="wait">⏳ Noch warten</SelectItem>
                 <SelectItem value="past">⌛ Höhepunkt überschritten</SelectItem>
                 <SelectItem value="unknown">❓ Unbekannt</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={pairing} onValueChange={setPairing}>
+              <SelectTrigger className="bg-card/50"><SelectValue placeholder="Speise" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Speisen</SelectItem>
+                {PAIRING_CATEGORIES.map(c => (
+                  <SelectItem key={c} value={c}>{pairingCategoryEmoji[c]} {c}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
