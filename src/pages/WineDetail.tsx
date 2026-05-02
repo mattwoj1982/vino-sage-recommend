@@ -7,8 +7,9 @@ import { StarRating } from "@/components/StarRating";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Edit, Wine as WineIcon } from "lucide-react";
+import { ArrowLeft, Edit, Wine as WineIcon, Sparkles, UtensilsCrossed, CalendarRange } from "lucide-react";
 import { toast } from "sonner";
+import { getDrinkStatus, drinkStatusLabel, drinkStatusEmoji } from "@/lib/drinkWindow";
 
 const WineDetail = () => {
   const { id } = useParams();
@@ -16,6 +17,7 @@ const WineDetail = () => {
   const navigate = useNavigate();
   const [wine, setWine] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
 
   useEffect(() => { if (!authLoading && !user) navigate("/auth"); }, [user, authLoading, navigate]);
 
@@ -28,8 +30,26 @@ const WineDetail = () => {
     })();
   }, [id, user]);
 
+  const handleGenerate = async () => {
+    if (!wine) return;
+    setGenerating(true);
+    const { data, error } = await supabase.functions.invoke("describe-wine", {
+      body: { wine_id: wine.id },
+    });
+    setGenerating(false);
+    if (error || data?.error) {
+      toast.error(data?.error || error?.message || "Generierung fehlgeschlagen");
+      return;
+    }
+    setWine({ ...wine, ...data });
+    toast.success("Wein-Profil erstellt");
+  };
+
   if (authLoading || loading) return null;
   if (!wine) return null;
+
+  const status = getDrinkStatus(wine.drink_from, wine.drink_to);
+  const hasProfile = wine.description || wine.food_pairing || wine.drink_from;
 
   return (
     <div className="min-h-screen">
@@ -66,14 +86,66 @@ const WineDetail = () => {
               {wine.grape_variety && <Badge variant="secondary">{wine.grape_variety}</Badge>}
               {wine.region && <Badge variant="secondary">{wine.region}</Badge>}
               <Badge className="bg-bordeaux-gradient">{wine.bottle_count} 🍾 im Keller</Badge>
+              {status !== "unknown" && (
+                <Badge variant="outline" className="border-primary/40">
+                  {drinkStatusEmoji[status]} {drinkStatusLabel[status]}
+                </Badge>
+              )}
             </div>
+
+            {(wine.drink_from || wine.drink_to) && (
+              <div className="mt-6 pt-6 border-t border-border">
+                <h2 className="serif text-xl font-semibold mb-2 flex items-center gap-2">
+                  <CalendarRange className="w-5 h-5 text-primary" /> Bestes Trinkfenster
+                </h2>
+                <p className="text-muted-foreground">
+                  {wine.drink_from ?? "?"} – {wine.drink_to ?? "?"}
+                </p>
+              </div>
+            )}
+
+            {wine.description && (
+              <div className="mt-6 pt-6 border-t border-border">
+                <h2 className="serif text-xl font-semibold mb-2 flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-primary" /> Beschreibung
+                </h2>
+                <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">{wine.description}</p>
+              </div>
+            )}
+
+            {wine.food_pairing && (
+              <div className="mt-6 pt-6 border-t border-border">
+                <h2 className="serif text-xl font-semibold mb-2 flex items-center gap-2">
+                  <UtensilsCrossed className="w-5 h-5 text-primary" /> Speisen-Empfehlung
+                </h2>
+                <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">{wine.food_pairing}</p>
+              </div>
+            )}
 
             {wine.notes && (
               <div className="mt-6 pt-6 border-t border-border">
-                <h2 className="serif text-xl font-semibold mb-2">Notizen</h2>
+                <h2 className="serif text-xl font-semibold mb-2">Eigene Notizen</h2>
                 <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">{wine.notes}</p>
               </div>
             )}
+
+            <div className="mt-6 pt-6 border-t border-border">
+              <Button
+                onClick={handleGenerate}
+                disabled={generating}
+                className="bg-bordeaux-gradient hover:opacity-90 transition shadow-glow w-full sm:w-auto"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                {generating
+                  ? "Sommelier denkt nach..."
+                  : hasProfile ? "Wein-Profil neu generieren" : "Wein-Profil mit KI erstellen"}
+              </Button>
+              {!hasProfile && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  Erzeugt Beschreibung, Speisen-Empfehlung und Trinkfenster.
+                </p>
+              )}
+            </div>
           </div>
         </Card>
       </main>
