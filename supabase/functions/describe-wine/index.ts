@@ -63,7 +63,10 @@ Deno.serve(async (req) => {
     ];
 
     const systemPrompt = `Du bist ein Sommelier. Liefere für den angegebenen Wein:
-- eine kurze, ansprechende Beschreibung (Stil, Aromen, Charakter)
+- eine kurze, ansprechende Beschreibung in zwei Absätzen:
+  1) Stil, Aromen, Struktur, Charakter
+  2) ein kurzer Absatz zur Qualität & Einordnung (Niveau, typische Bewertung/Reputation, Preis-Leistung, Reifepotenzial — ehrlich, nicht beschönigend)
+  Trenne die beiden Absätze mit einer Leerzeile (\\n\\n).
 - konkrete Speisen-Empfehlungen als Fließtext (z.B. "Geschmortes Rind, gereifter Hartkäse, Wildragout")
 - 1-3 passende Kategorien aus der vorgegebenen Liste (für Filterung)
 - ein realistisches Trinkfenster (Jahre)
