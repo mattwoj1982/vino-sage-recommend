@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Search, Wine as WineIcon, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { getDrinkStatus, type DrinkStatus } from "@/lib/drinkWindow";
 
 interface Wine {
   id: string;
@@ -20,6 +21,8 @@ interface Wine {
   rating: number | null;
   photo_url: string | null;
   bottle_count: number;
+  drink_from: number | null;
+  drink_to: number | null;
 }
 
 const Cellar = () => {
@@ -31,6 +34,7 @@ const Cellar = () => {
   const [grape, setGrape] = useState("all");
   const [region, setRegion] = useState("all");
   const [vintage, setVintage] = useState("all");
+  const [drinkWindow, setDrinkWindow] = useState<"all" | DrinkStatus>("all");
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -41,7 +45,7 @@ const Cellar = () => {
     (async () => {
       const { data, error } = await supabase
         .from("wines")
-        .select("id, name, winery, vintage, grape_variety, region, rating, photo_url, bottle_count")
+        .select("id, name, winery, vintage, grape_variety, region, rating, photo_url, bottle_count, drink_from, drink_to")
         .order("created_at", { ascending: false });
       if (error) toast.error(error.message);
       else setWines(data ?? []);
@@ -59,8 +63,9 @@ const Cellar = () => {
     if (grape !== "all" && w.grape_variety !== grape) return false;
     if (region !== "all" && w.region !== region) return false;
     if (vintage !== "all" && String(w.vintage) !== vintage) return false;
+    if (drinkWindow !== "all" && getDrinkStatus(w.drink_from, w.drink_to) !== drinkWindow) return false;
     return true;
-  }), [wines, search, grape, region, vintage]);
+  }), [wines, search, grape, region, vintage, drinkWindow]);
 
   if (authLoading) return null;
 
@@ -83,7 +88,7 @@ const Cellar = () => {
               className="pl-10 bg-card/50"
             />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <Select value={grape} onValueChange={setGrape}>
               <SelectTrigger className="bg-card/50"><SelectValue placeholder="Rebsorte" /></SelectTrigger>
               <SelectContent>
@@ -103,6 +108,16 @@ const Cellar = () => {
               <SelectContent>
                 <SelectItem value="all">Alle Jahrgänge</SelectItem>
                 {vintages.map(v => <SelectItem key={v} value={String(v)}>{v}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={drinkWindow} onValueChange={(v) => setDrinkWindow(v as "all" | DrinkStatus)}>
+              <SelectTrigger className="bg-card/50"><SelectValue placeholder="Trinkfenster" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Trinkfenster</SelectItem>
+                <SelectItem value="now">🍷 Jetzt trinken</SelectItem>
+                <SelectItem value="wait">⏳ Noch warten</SelectItem>
+                <SelectItem value="past">⌛ Höhepunkt überschritten</SelectItem>
+                <SelectItem value="unknown">❓ Unbekannt</SelectItem>
               </SelectContent>
             </Select>
           </div>
