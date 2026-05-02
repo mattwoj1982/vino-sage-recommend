@@ -132,11 +132,14 @@ Nutze AUSSCHLIESSLICH das Tool "wine_profile" — kein Freitext.`;
     const toolUse = data.content?.find((c: any) => c.type === "tool_use");
     if (!toolUse?.input) return json({ error: "Keine Antwort von Claude" }, 502);
 
-    const { description, food_pairing, drink_from, drink_to } = toolUse.input;
+    const { description, food_pairing, pairing_categories, drink_from, drink_to } = toolUse.input;
+    const safeCategories = Array.isArray(pairing_categories)
+      ? pairing_categories.filter((c: unknown) => typeof c === "string")
+      : [];
 
     const { error: updateErr } = await supabase
       .from("wines")
-      .update({ description, food_pairing, drink_from, drink_to })
+      .update({ description, food_pairing, pairing_categories: safeCategories, drink_from, drink_to })
       .eq("id", wine_id)
       .eq("user_id", user.id);
 
@@ -145,7 +148,7 @@ Nutze AUSSCHLIESSLICH das Tool "wine_profile" — kein Freitext.`;
       return json({ error: "Speichern fehlgeschlagen" }, 500);
     }
 
-    return json({ description, food_pairing, drink_from, drink_to });
+    return json({ description, food_pairing, pairing_categories: safeCategories, drink_from, drink_to });
   } catch (e) {
     console.error("describe-wine error:", e);
     return json({ error: e instanceof Error ? e.message : "Unbekannter Fehler" }, 500);
