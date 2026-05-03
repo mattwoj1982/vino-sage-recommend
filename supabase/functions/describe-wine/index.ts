@@ -163,6 +163,6 @@ Nutze AUSSCHLIESSLICH das Tool "wine_profile" — kein Freitext.`;
     return json({ description, food_pairing, pairing_categories: safeCategories, drink_from, drink_to, price_min, price_max });
   } catch (e) {
     console.error("describe-wine error:", e);
-    return json({ error: e instanceof Error ? e.message : "Unbekannter Fehler" }, 500);
+    return json({ error: "Interner Fehler. Bitte versuche es erneut." }, 500);
   }
 });
