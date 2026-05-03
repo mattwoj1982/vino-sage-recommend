@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { ArrowLeft, Upload, Trash2, Sparkles } from "lucide-react";
+import { WinePhoto } from "@/components/WinePhoto";
 
 const WineForm = () => {
   const { id } = useParams();
@@ -152,7 +153,11 @@ const WineForm = () => {
               </p>
               <div className="flex items-center gap-3">
                 {form.photo_url && (
-                  <img src={form.photo_url} alt="Wein" className="w-20 h-20 object-cover rounded-md border border-border" />
+                  <WinePhoto
+                    photoUrl={form.photo_url}
+                    alt="Wein"
+                    className="w-20 h-20 object-cover rounded-md border border-border"
+                  />
                 )}
                 <label className="flex-1">
                   <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" disabled={uploading || analyzing} />
