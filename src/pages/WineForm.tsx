@@ -94,8 +94,8 @@ const WineForm = () => {
     const path = `${user.id}/${Date.now()}.${ext}`;
     const { error } = await supabase.storage.from("wine-photos").upload(path, file);
     if (error) { toast.error(error.message); setUploading(false); return; }
-    const { data } = supabase.storage.from("wine-photos").getPublicUrl(path);
-    setForm(f => ({ ...f, photo_url: data.publicUrl }));
+    // Store the storage path; signed URLs are generated on demand for display.
+    setForm(f => ({ ...f, photo_url: path }));
     setUploading(false);
     toast.success("Foto hochgeladen");
     // Auto-analyze label
