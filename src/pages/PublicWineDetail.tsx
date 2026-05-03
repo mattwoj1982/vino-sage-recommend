@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Wine as WineIcon } from "lucide-react";
+import { WinePhoto } from "@/components/WinePhoto";
 
 const PublicWineDetail = () => {
   const { token, id } = useParams();
@@ -33,13 +34,16 @@ const PublicWineDetail = () => {
       </Button>
       <Card className="overflow-hidden bg-card/70 backdrop-blur shadow-elegant">
         <div className="aspect-[16/10] bg-wine-gradient relative">
-          {wine.photo_url ? (
-            <img src={wine.photo_url} alt={wine.name} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <WineIcon className="w-24 h-24 text-primary-foreground/40" />
-            </div>
-          )}
+          <WinePhoto
+            photoUrl={wine.photo_url}
+            alt={wine.name}
+            className="w-full h-full object-cover"
+            fallback={
+              <div className="w-full h-full flex items-center justify-center">
+                <WineIcon className="w-24 h-24 text-primary-foreground/40" />
+              </div>
+            }
+          />
         </div>
         <div className="p-6 sm:p-8">
           <h1 className="serif text-4xl font-semibold">{wine.name}</h1>

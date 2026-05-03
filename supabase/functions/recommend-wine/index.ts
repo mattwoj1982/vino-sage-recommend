@@ -98,7 +98,7 @@ ${wineList}`;
     });
   } catch (e) {
     console.error("recommend-wine error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unbekannter Fehler" }), {
+    return new Response(JSON.stringify({ error: "Interner Fehler. Bitte versuche es erneut." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

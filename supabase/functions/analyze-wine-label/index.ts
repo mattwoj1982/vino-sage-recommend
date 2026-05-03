@@ -114,6 +114,6 @@ Wenn ein Feld nicht erkennbar ist, setze null. Wenn KEIN Wein/Weinetikett erkenn
     return jsonResponse(parsed);
   } catch (e) {
     console.error("analyze-wine-label error:", e);
-    return fallbackResponse(e instanceof Error ? e.message : "Unbekannter Fehler");
+    return fallbackResponse("Bilderkennung ist momentan nicht verfügbar");
   }
 });
