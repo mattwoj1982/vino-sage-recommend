@@ -11,6 +11,7 @@ import { ArrowLeft, Edit, Wine as WineIcon, Sparkles, UtensilsCrossed, CalendarR
 import { toast } from "sonner";
 import { getDrinkStatus, drinkStatusLabel, drinkStatusEmoji } from "@/lib/drinkWindow";
 import { pairingCategoryEmoji } from "@/lib/pairingCategories";
+import { WinePhoto } from "@/components/WinePhoto";
 
 const WineDetail = () => {
   const { id } = useParams();
@@ -61,13 +62,16 @@ const WineDetail = () => {
         </Button>
         <Card className="overflow-hidden bg-card/70 backdrop-blur shadow-elegant">
           <div className="aspect-[16/10] bg-wine-gradient relative">
-            {wine.photo_url ? (
-              <img src={wine.photo_url} alt={wine.name} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <WineIcon className="w-24 h-24 text-primary-foreground/40" />
-              </div>
-            )}
+            <WinePhoto
+              photoUrl={wine.photo_url}
+              alt={wine.name}
+              className="w-full h-full object-cover"
+              fallback={
+                <div className="w-full h-full flex items-center justify-center">
+                  <WineIcon className="w-24 h-24 text-primary-foreground/40" />
+                </div>
+              }
+            />
           </div>
           <div className="p-6 sm:p-8">
             <div className="flex items-start justify-between gap-4 mb-2">

@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Wine as WineIcon, Star } from "lucide-react";
 import { getDrinkStatus, drinkStatusEmoji, drinkStatusLabel } from "@/lib/drinkWindow";
+import { WinePhoto } from "@/components/WinePhoto";
 
 interface WineCardProps {
   wine: {
@@ -26,13 +27,16 @@ export const WineCard = ({ wine, basePath = "/wine" }: WineCardProps) => {
     <Link to={`${basePath}/${wine.id}`}>
       <Card className="overflow-hidden border-border/50 bg-card/70 backdrop-blur hover:border-primary/50 hover:shadow-glow transition-all duration-300 group h-full">
         <div className="aspect-[4/3] bg-wine-gradient relative overflow-hidden">
-          {wine.photo_url ? (
-            <img src={wine.photo_url} alt={wine.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <WineIcon className="w-16 h-16 text-primary-foreground/40" />
-            </div>
-          )}
+          <WinePhoto
+            photoUrl={wine.photo_url}
+            alt={wine.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            fallback={
+              <div className="w-full h-full flex items-center justify-center">
+                <WineIcon className="w-16 h-16 text-primary-foreground/40" />
+              </div>
+            }
+          />
           <div className="absolute top-2 right-2 bg-background/80 backdrop-blur px-2 py-1 rounded-md text-xs font-medium">
             {wine.bottle_count} 🍾
           </div>
