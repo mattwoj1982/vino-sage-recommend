@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_rate_limits: {
+        Row: {
+          function_name: string
+          id: string
+          request_count: number
+          updated_at: string
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          function_name: string
+          id?: string
+          request_count?: number
+          updated_at?: string
+          user_id: string
+          window_start?: string
+        }
+        Update: {
+          function_name?: string
+          id?: string
+          request_count?: number
+          updated_at?: string
+          user_id?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -133,6 +160,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_and_increment_rate_limit: {
+        Args: {
+          _function_name: string
+          _max_requests: number
+          _user_id: string
+          _window_seconds: number
+        }
+        Returns: boolean
+      }
       get_share_owner_name: { Args: { share_token: string }; Returns: string }
       get_shared_wines: {
         Args: { share_token: string }
