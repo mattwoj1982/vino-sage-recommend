@@ -35,6 +35,16 @@ Deno.serve(async (req) => {
       });
     }
 
+    const { data: allowed, error: rlErr } = await supabase.rpc("check_and_increment_rate_limit", {
+      _user_id: user.id, _function_name: "recommend-wine", _max_requests: 30, _window_seconds: 3600,
+    });
+    if (rlErr) console.error("rate limit err", rlErr);
+    if (allowed === false) {
+      return new Response(JSON.stringify({ error: "Zu viele Anfragen. Bitte später erneut versuchen." }), {
+        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { prompt } = await req.json();
     if (!prompt || typeof prompt !== "string" || prompt.length > 1000) {
       return new Response(JSON.stringify({ error: "Ungültige Anfrage" }), {

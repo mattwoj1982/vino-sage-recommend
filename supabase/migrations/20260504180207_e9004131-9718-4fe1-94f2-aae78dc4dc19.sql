@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.check_and_increment_rate_limit(UUID, TEXT, INTEGER, INTEGER) FROM PUBLIC, anon, authenticated;

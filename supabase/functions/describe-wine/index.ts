@@ -29,6 +29,12 @@ Deno.serve(async (req) => {
     const { data: { user } } = await supabase.auth.getUser(token);
     if (!user) return json({ error: "Nicht autorisiert" }, 401);
 
+    const { data: allowed, error: rlErr } = await supabase.rpc("check_and_increment_rate_limit", {
+      _user_id: user.id, _function_name: "describe-wine", _max_requests: 30, _window_seconds: 3600,
+    });
+    if (rlErr) console.error("rate limit err", rlErr);
+    if (allowed === false) return json({ error: "Zu viele Anfragen. Bitte später erneut versuchen." }, 429);
+
     const { wine_id } = await req.json().catch(() => ({}));
     if (!wine_id || typeof wine_id !== "string") return json({ error: "wine_id fehlt" }, 400);
 

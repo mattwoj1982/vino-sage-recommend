@@ -33,6 +33,16 @@ Deno.serve(async (req) => {
       });
     }
 
+    const { data: allowed, error: rlErr } = await supabase.rpc("check_and_increment_rate_limit", {
+      _user_id: user.id, _function_name: "sommelier-menu", _max_requests: 20, _window_seconds: 3600,
+    });
+    if (rlErr) console.error("rate limit err", rlErr);
+    if (allowed === false) {
+      return new Response(JSON.stringify({ error: "Zu viele Anfragen. Bitte später erneut versuchen." }), {
+        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { menu } = await req.json();
     if (!menu || typeof menu !== "string" || menu.length > 3000) {
       return new Response(JSON.stringify({ error: "Ungültige Anfrage" }), {
