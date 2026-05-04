@@ -10,6 +10,7 @@ import ResetPassword from "./pages/ResetPassword";
 import WineForm from "./pages/WineForm";
 import WineDetail from "./pages/WineDetail";
 import Recommend from "./pages/Recommend";
+import Sommelier from "./pages/Sommelier";
 import Share from "./pages/Share";
 import PublicCellar from "./pages/PublicCellar";
 import PublicWineDetail from "./pages/PublicWineDetail";
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/wine/:id" element={<WineDetail />} />
             <Route path="/wine/:id/edit" element={<WineForm />} />
             <Route path="/recommend" element={<Recommend />} />
+            <Route path="/sommelier" element={<Sommelier />} />
             <Route path="/share" element={<Share />} />
             <Route path="/keller/:token" element={<PublicCellar />} />
             <Route path="/keller/:token/wein/:id" element={<PublicWineDetail />} />
