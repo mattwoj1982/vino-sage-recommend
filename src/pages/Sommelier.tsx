@@ -1,0 +1,91 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { AppHeader } from "@/components/AppHeader";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { ChefHat, Sparkles } from "lucide-react";
+import { toast } from "sonner";
+
+const Sommelier = () => {
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const [menu, setMenu] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [pairing, setPairing] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!authLoading && !user) navigate("/auth");
+  }, [user, authLoading, navigate]);
+
+  const handleSubmit = async () => {
+    if (!menu.trim()) {
+      toast.error("Bitte beschreibe eine Speise oder ein Menü.");
+      return;
+    }
+    setLoading(true);
+    setPairing(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("sommelier-menu", {
+        body: { menu: menu.trim() },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setPairing(data?.pairing ?? "Keine Empfehlung erhalten.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Fehler bei der Empfehlung");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (authLoading) return null;
+
+  return (
+    <div className="min-h-screen">
+      <AppHeader />
+      <main className="container mx-auto px-4 py-8 max-w-3xl">
+        <div className="mb-8 flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full bg-bordeaux-gradient flex items-center justify-center shadow-glow">
+            <ChefHat className="w-6 h-6 text-primary-foreground" />
+          </div>
+          <div>
+            <h1 className="serif text-3xl sm:text-4xl font-semibold">KI-Sommelier</h1>
+            <p className="text-muted-foreground text-sm">Beschreibe deine Speise oder dein Menü</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <Textarea
+            placeholder={"Beispiel:\nVorspeise: Burrata mit Tomaten und Basilikum\nHauptgang: Geschmorte Lammhaxe mit Rosmarinjus\nDessert: Schokoladenfondant"}
+            value={menu}
+            onChange={(e) => setMenu(e.target.value)}
+            rows={8}
+            className="bg-card/50 resize-none"
+            maxLength={3000}
+          />
+          <Button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="w-full bg-bordeaux-gradient"
+            size="lg"
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            {loading ? "Sommelier denkt nach..." : "Weine empfehlen lassen"}
+          </Button>
+        </div>
+
+        {pairing && (
+          <div className="mt-8 p-6 rounded-2xl border border-border bg-card/40 backdrop-blur">
+            <div className="prose prose-invert max-w-none whitespace-pre-wrap serif text-base leading-relaxed">
+              {pairing}
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+};
+
+export default Sommelier;

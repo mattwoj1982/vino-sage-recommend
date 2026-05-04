@@ -7,7 +7,7 @@ import { WineCard } from "@/components/WineCard";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Search, Wine as WineIcon, Plus } from "lucide-react";
+import { Search, Wine as WineIcon, Plus, ChefHat } from "lucide-react";
 import { toast } from "sonner";
 import { getDrinkStatus, type DrinkStatus } from "@/lib/drinkWindow";
 import { PAIRING_CATEGORIES, pairingCategoryEmoji } from "@/lib/pairingCategories";
@@ -81,6 +81,15 @@ const Cellar = () => {
           <h1 className="serif text-4xl sm:text-5xl font-semibold mb-2">Dein Weinkeller</h1>
           <p className="text-muted-foreground">{wines.length} {wines.length === 1 ? "Wein" : "Weine"} in deiner Sammlung</p>
         </div>
+
+        <Button
+          onClick={() => navigate("/sommelier")}
+          size="lg"
+          className="w-full sm:w-auto mb-6 bg-bordeaux-gradient shadow-glow"
+        >
+          <ChefHat className="w-5 h-5 mr-2" />
+          KI-Sommelier: Weine zum Menü finden
+        </Button>
 
         <div className="flex flex-col gap-3 mb-6">
           <div className="relative">
