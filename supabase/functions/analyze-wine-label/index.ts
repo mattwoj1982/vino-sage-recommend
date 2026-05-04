@@ -36,27 +36,26 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "Nicht autorisiert" }, 401);
     }
 
-    let body: { image_url?: unknown; image_base64?: unknown; media_type?: unknown };
+    let body: { image_base64?: unknown; media_type?: unknown };
     try {
       body = await req.json();
     } catch {
       return jsonResponse({ error: "Ungültige Anfrage" }, 400);
     }
 
-    const image_url = typeof body.image_url === "string" ? body.image_url : undefined;
     const image_base64 = typeof body.image_base64 === "string" ? body.image_base64 : undefined;
-    const media_type = typeof body.media_type === "string" ? body.media_type : "image/jpeg";
+    const rawMediaType = typeof body.media_type === "string" ? body.media_type : "image/jpeg";
+    const allowedMediaTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    const media_type = allowedMediaTypes.includes(rawMediaType) ? rawMediaType : "image/jpeg";
 
-    if (!image_url && !image_base64) {
+    if (!image_base64) {
       return jsonResponse({ error: "Bild fehlt" }, 400);
     }
-    if (image_base64 && image_base64.length > 28_000_000) {
+    if (image_base64.length > 28_000_000) {
       return jsonResponse({ error: "Bild ist zu groß" }, 400);
     }
 
-    const imageSource = image_base64
-      ? { type: "base64", media_type, data: image_base64 }
-      : { type: "url", url: image_url };
+    const imageSource = { type: "base64", media_type, data: image_base64 };
 
     const systemPrompt = `Du bist ein Wein-Experte, der Weinetiketten analysiert. Extrahiere die Informationen vom Etikett und gib AUSSCHLIESSLICH ein gültiges JSON-Objekt zurück, ohne Erklärungen, ohne Markdown, ohne Code-Block-Markierungen.
 
