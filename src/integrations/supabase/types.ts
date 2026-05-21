@@ -41,6 +41,39 @@ export type Database = {
         }
         Relationships: []
       }
+      menus: {
+        Row: {
+          courses: Json
+          created_at: string
+          guest_count: number
+          id: string
+          name: string
+          notes: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          courses?: Json
+          created_at?: string
+          guest_count?: number
+          id?: string
+          name: string
+          notes?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          courses?: Json
+          created_at?: string
+          guest_count?: number
+          id?: string
+          name?: string
+          notes?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -85,6 +118,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      tasting_notes: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          occasion: string | null
+          photo_url: string | null
+          rating: number | null
+          tasted_at: string
+          user_id: string
+          wine_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          occasion?: string | null
+          photo_url?: string | null
+          rating?: number | null
+          tasted_at?: string
+          user_id: string
+          wine_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          occasion?: string | null
+          photo_url?: string | null
+          rating?: number | null
+          tasted_at?: string
+          user_id?: string
+          wine_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasting_notes_wine_id_fkey"
+            columns: ["wine_id"]
+            isOneToOne: false
+            referencedRelation: "wines"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wines: {
         Row: {
