@@ -80,12 +80,12 @@ const Menus = () => {
       user_id: user.id,
       name: editing.name.trim(),
       guest_count: editing.guest_count,
-      courses: editing.courses,
+      courses: editing.courses as any,
       notes: editing.notes,
     };
     const { error } = editing.id
       ? await supabase.from("menus").update(payload).eq("id", editing.id)
-      : await supabase.from("menus").insert(payload);
+      : await supabase.from("menus").insert(payload as any);
     if (error) return toast.error(error.message);
     toast.success("Menü gespeichert");
     setEditing(null);
