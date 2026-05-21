@@ -23,7 +23,7 @@ const WineForm = () => {
   const [analyzing, setAnalyzing] = useState(false);
 
   const [form, setForm] = useState({
-    name: "", winery: "", vintage: "", grape_variety: "", region: "",
+    name: "", winery: "", vintage: "", grape_variety: "", region: "", country: "",
     rating: 0, notes: "", photo_url: "", bottle_count: 1,
   });
 
@@ -38,7 +38,7 @@ const WineForm = () => {
       if (error || !data) { toast.error("Wein nicht gefunden"); navigate("/"); return; }
       setForm({
         name: data.name, winery: data.winery ?? "", vintage: data.vintage?.toString() ?? "",
-        grape_variety: data.grape_variety ?? "", region: data.region ?? "",
+        grape_variety: data.grape_variety ?? "", region: data.region ?? "", country: data.country ?? "",
         rating: data.rating ?? 0, notes: data.notes ?? "", photo_url: data.photo_url ?? "",
         bottle_count: data.bottle_count,
       });
