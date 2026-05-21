@@ -7,11 +7,13 @@ import { StarRating } from "@/components/StarRating";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Edit, Wine as WineIcon, Sparkles, UtensilsCrossed, CalendarRange, Tag } from "lucide-react";
+import { ArrowLeft, Edit, Wine as WineIcon, Sparkles, UtensilsCrossed, CalendarRange, Tag, GlassWater } from "lucide-react";
 import { toast } from "sonner";
 import { getDrinkStatus, drinkStatusLabel, drinkStatusEmoji } from "@/lib/drinkWindow";
 import { pairingCategoryEmoji } from "@/lib/pairingCategories";
 import { WinePhoto } from "@/components/WinePhoto";
+import { ServiceDialog } from "@/components/ServiceDialog";
+import { TastingNotesSection } from "@/components/TastingNotesSection";
 
 const WineDetail = () => {
   const { id } = useParams();
@@ -20,6 +22,7 @@ const WineDetail = () => {
   const [wine, setWine] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [serviceOpen, setServiceOpen] = useState(false);
 
   useEffect(() => { if (!authLoading && !user) navigate("/auth"); }, [user, authLoading, navigate]);
 
@@ -79,9 +82,18 @@ const WineDetail = () => {
                 <h1 className="serif text-4xl font-semibold">{wine.name}</h1>
                 {wine.winery && <p className="text-muted-foreground mt-1">{wine.winery}</p>}
               </div>
-              <Button variant="outline" onClick={() => navigate(`/wine/${wine.id}/edit`)}>
-                <Edit className="w-4 h-4 mr-2" /> Bearbeiten
-              </Button>
+              <div className="flex flex-col gap-2">
+                <Button
+                  onClick={() => setServiceOpen(true)}
+                  disabled={!wine.bottle_count}
+                  className="bg-bordeaux-gradient shadow-glow"
+                >
+                  <GlassWater className="w-4 h-4 mr-2" /> Servieren
+                </Button>
+                <Button variant="outline" onClick={() => navigate(`/wine/${wine.id}/edit`)}>
+                  <Edit className="w-4 h-4 mr-2" /> Bearbeiten
+                </Button>
+              </div>
             </div>
 
             {wine.rating > 0 && <div className="my-4"><StarRating value={wine.rating} readonly /></div>}
@@ -157,6 +169,8 @@ const WineDetail = () => {
               </div>
             )}
 
+            <TastingNotesSection wineId={wine.id} />
+
             <div className="mt-6 pt-6 border-t border-border">
               <Button
                 onClick={handleGenerate}
@@ -177,6 +191,13 @@ const WineDetail = () => {
           </div>
         </Card>
       </main>
+
+      <ServiceDialog
+        open={serviceOpen}
+        onOpenChange={setServiceOpen}
+        wine={wine}
+        onServed={(c) => setWine({ ...wine, bottle_count: c })}
+      />
     </div>
   );
 };
