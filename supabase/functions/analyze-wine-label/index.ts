@@ -65,7 +65,8 @@ Schema:
   "winery": string|null,    // Weingut/Erzeuger
   "vintage": number|null,   // Jahrgang als Zahl, z.B. 2018
   "grape_variety": string|null, // Rebsorte (z.B. "Cabernet Sauvignon", "Riesling")
-  "region": string|null     // Region/Anbaugebiet (z.B. "Bordeaux", "Mosel")
+  "region": string|null,    // Region/Anbaugebiet (z.B. "Bordeaux", "Mosel")
+  "country": string|null    // Herkunftsland (z.B. "Frankreich", "Deutschland", "Italien")
 }
 
 Wenn ein Feld nicht erkennbar ist, setze null. Wenn KEIN Wein/Weinetikett erkennbar ist, gib zurück: {"error":"Kein Wein erkannt"}`;

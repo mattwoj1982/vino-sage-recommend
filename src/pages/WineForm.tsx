@@ -78,6 +78,7 @@ const WineForm = () => {
         vintage: data.vintage ? String(data.vintage) : f.vintage,
         grape_variety: data.grape_variety ?? f.grape_variety,
         region: data.region ?? f.region,
+        country: data.country ?? f.country,
       }));
       toast.success("Wein erkannt – Felder ausgefüllt");
     } catch (e: any) {
@@ -114,6 +115,7 @@ const WineForm = () => {
       vintage: form.vintage ? parseInt(form.vintage) : null,
       grape_variety: form.grape_variety || null,
       region: form.region || null,
+      country: form.country || null,
       rating: form.rating || null,
       notes: form.notes || null,
       photo_url: form.photo_url || null,
@@ -195,6 +197,10 @@ const WineForm = () => {
               <div>
                 <Label htmlFor="region">Region</Label>
                 <Input id="region" value={form.region} onChange={(e) => setForm(f => ({ ...f, region: e.target.value }))} />
+              </div>
+              <div>
+                <Label htmlFor="country">Land</Label>
+                <Input id="country" value={form.country} onChange={(e) => setForm(f => ({ ...f, country: e.target.value }))} />
               </div>
               <div>
                 <Label htmlFor="bottles">Anzahl Flaschen</Label>
