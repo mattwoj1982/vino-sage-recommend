@@ -23,7 +23,7 @@ const WineForm = () => {
   const [analyzing, setAnalyzing] = useState(false);
 
   const [form, setForm] = useState({
-    name: "", winery: "", vintage: "", grape_variety: "", region: "",
+    name: "", winery: "", vintage: "", grape_variety: "", region: "", country: "",
     rating: 0, notes: "", photo_url: "", bottle_count: 1,
   });
 
@@ -38,7 +38,7 @@ const WineForm = () => {
       if (error || !data) { toast.error("Wein nicht gefunden"); navigate("/"); return; }
       setForm({
         name: data.name, winery: data.winery ?? "", vintage: data.vintage?.toString() ?? "",
-        grape_variety: data.grape_variety ?? "", region: data.region ?? "",
+        grape_variety: data.grape_variety ?? "", region: data.region ?? "", country: data.country ?? "",
         rating: data.rating ?? 0, notes: data.notes ?? "", photo_url: data.photo_url ?? "",
         bottle_count: data.bottle_count,
       });
@@ -78,6 +78,7 @@ const WineForm = () => {
         vintage: data.vintage ? String(data.vintage) : f.vintage,
         grape_variety: data.grape_variety ?? f.grape_variety,
         region: data.region ?? f.region,
+        country: data.country ?? f.country,
       }));
       toast.success("Wein erkannt – Felder ausgefüllt");
     } catch (e: any) {
@@ -114,6 +115,7 @@ const WineForm = () => {
       vintage: form.vintage ? parseInt(form.vintage) : null,
       grape_variety: form.grape_variety || null,
       region: form.region || null,
+      country: form.country || null,
       rating: form.rating || null,
       notes: form.notes || null,
       photo_url: form.photo_url || null,
@@ -195,6 +197,10 @@ const WineForm = () => {
               <div>
                 <Label htmlFor="region">Region</Label>
                 <Input id="region" value={form.region} onChange={(e) => setForm(f => ({ ...f, region: e.target.value }))} />
+              </div>
+              <div>
+                <Label htmlFor="country">Land</Label>
+                <Input id="country" value={form.country} onChange={(e) => setForm(f => ({ ...f, country: e.target.value }))} />
               </div>
               <div>
                 <Label htmlFor="bottles">Anzahl Flaschen</Label>

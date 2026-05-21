@@ -19,6 +19,7 @@ interface Wine {
   vintage: number | null;
   grape_variety: string | null;
   region: string | null;
+  country: string | null;
   rating: number | null;
   photo_url: string | null;
   bottle_count: number;
@@ -35,6 +36,7 @@ const Cellar = () => {
   const [search, setSearch] = useState("");
   const [grape, setGrape] = useState("all");
   const [region, setRegion] = useState("all");
+  const [country, setCountry] = useState("all");
   const [vintage, setVintage] = useState("all");
   const [drinkWindow, setDrinkWindow] = useState<"all" | DrinkStatus>("all");
   const [pairing, setPairing] = useState("all");
@@ -48,7 +50,7 @@ const Cellar = () => {
     (async () => {
       const { data, error } = await supabase
         .from("wines")
-        .select("id, name, winery, vintage, grape_variety, region, rating, photo_url, bottle_count, drink_from, drink_to, pairing_categories")
+        .select("id, name, winery, vintage, grape_variety, region, country, rating, photo_url, bottle_count, drink_from, drink_to, pairing_categories")
         .order("created_at", { ascending: false });
       if (error) toast.error(error.message);
       else setWines((data as Wine[]) ?? []);
@@ -58,18 +60,20 @@ const Cellar = () => {
 
   const grapes = useMemo(() => Array.from(new Set(wines.map(w => w.grape_variety).filter(Boolean))) as string[], [wines]);
   const regions = useMemo(() => Array.from(new Set(wines.map(w => w.region).filter(Boolean))) as string[], [wines]);
+  const countries = useMemo(() => Array.from(new Set(wines.map(w => w.country).filter(Boolean))).sort() as string[], [wines]);
   const vintages = useMemo(() => Array.from(new Set(wines.map(w => w.vintage).filter(Boolean))).sort((a, b) => (b as number) - (a as number)) as number[], [wines]);
 
   const filtered = useMemo(() => wines.filter(w => {
     const s = search.toLowerCase();
-    if (s && !`${w.name} ${w.winery ?? ""} ${w.region ?? ""} ${w.grape_variety ?? ""}`.toLowerCase().includes(s)) return false;
+    if (s && !`${w.name} ${w.winery ?? ""} ${w.region ?? ""} ${w.country ?? ""} ${w.grape_variety ?? ""}`.toLowerCase().includes(s)) return false;
     if (grape !== "all" && w.grape_variety !== grape) return false;
     if (region !== "all" && w.region !== region) return false;
+    if (country !== "all" && w.country !== country) return false;
     if (vintage !== "all" && String(w.vintage) !== vintage) return false;
     if (drinkWindow !== "all" && getDrinkStatus(w.drink_from, w.drink_to) !== drinkWindow) return false;
     if (pairing !== "all" && !(w.pairing_categories ?? []).includes(pairing)) return false;
     return true;
-  }), [wines, search, grape, region, vintage, drinkWindow, pairing]);
+  }), [wines, search, grape, region, country, vintage, drinkWindow, pairing]);
 
   if (authLoading) return null;
 
@@ -101,7 +105,7 @@ const Cellar = () => {
               className="pl-10 bg-card/50"
             />
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
             <Select value={grape} onValueChange={setGrape}>
               <SelectTrigger className="bg-card/50"><SelectValue placeholder="Rebsorte" /></SelectTrigger>
               <SelectContent>
@@ -114,6 +118,13 @@ const Cellar = () => {
               <SelectContent>
                 <SelectItem value="all">Alle Regionen</SelectItem>
                 {regions.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={country} onValueChange={setCountry}>
+              <SelectTrigger className="bg-card/50"><SelectValue placeholder="Land" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Länder</SelectItem>
+                {countries.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={vintage} onValueChange={setVintage}>
