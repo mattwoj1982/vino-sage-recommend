@@ -89,6 +89,7 @@ export type Database = {
       wines: {
         Row: {
           bottle_count: number
+          country: string | null
           created_at: string
           description: string | null
           drink_from: number | null
@@ -111,6 +112,7 @@ export type Database = {
         }
         Insert: {
           bottle_count?: number
+          country?: string | null
           created_at?: string
           description?: string | null
           drink_from?: number | null
@@ -133,6 +135,7 @@ export type Database = {
         }
         Update: {
           bottle_count?: number
+          country?: string | null
           created_at?: string
           description?: string | null
           drink_from?: number | null
@@ -174,6 +177,7 @@ export type Database = {
         Args: { share_token: string }
         Returns: {
           bottle_count: number
+          country: string | null
           created_at: string
           description: string | null
           drink_from: number | null
