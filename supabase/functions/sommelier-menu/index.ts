@@ -43,7 +43,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { menu } = await req.json();
+    const body = await req.json();
+    const menu = body?.menu;
+    const guestCount = Number.isFinite(Number(body?.guest_count)) ? Math.max(1, Math.min(50, Math.floor(Number(body.guest_count)))) : null;
     if (!menu || typeof menu !== "string" || menu.length > 3000) {
       return new Response(JSON.stringify({ error: "Ungültige Anfrage" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -67,19 +69,25 @@ Deno.serve(async (req) => {
       `${i + 1}. "${w.name}" – ${w.winery ?? "?"}, ${w.vintage ?? "?"}, ${w.grape_variety ?? "?"}, ${w.region ?? "?"}, Bewertung: ${w.rating ?? "-"}/5, ${w.bottle_count} Flasche(n)${w.food_pairing ? `, Speise: ${w.food_pairing}` : ""}${w.pairing_categories?.length ? `, Kategorien: ${w.pairing_categories.join(", ")}` : ""}${w.notes ? `, Notizen: ${w.notes}` : ""}`
     ).join("\n");
 
-    const systemPrompt = `Du bist ein erfahrener KI-Sommelier. Der Nutzer beschreibt eine Speise oder ein mehrgängiges Menü. Wähle aus dem verfügbaren Weinkeller die passenden Weine aus – pro Gang maximal 2 Empfehlungen. Achte auf eine stimmige Abfolge (z. B. leicht zu schwer, trocken vor süß, weiß vor rot wenn sinnvoll). Verwende ausschließlich Weine aus der Liste.
+    const guestBlock = guestCount
+      ? `\n\nGästeanzahl: ${guestCount}. Rechne pro Gang ca. 0,15 l Wein pro Gast (ganze Flasche = 0,75 l). Gib **pro Hauptempfehlung** explizit an, ob eine **ganze Flasche** sinnvoll ist, eine **halbe Flasche / Coravin** reicht, oder ob es **glasweise** sein sollte. Begründe das mit Gäste­anzahl und Gangzahl.`
+      : `\n\nGib pro Empfehlung einen kurzen Hinweis zur Servierform (Flasche, halbe Flasche/Coravin, glasweise).`;
 
-Antworte auf Deutsch in folgendem Markdown-Format:
+    const systemPrompt = `Du bist ein erfahrener KI-Sommelier. Der Nutzer beschreibt eine Speise oder ein mehrgängiges Menü. Wähle aus dem verfügbaren Weinkeller die passenden Weine aus. Verwende ausschließlich Weine aus der Liste.
+
+Antworte auf Deutsch in folgendem Markdown-Format pro Gang:
 
 ## Gang 1: [Speise]
-**[Weinname]** ([Weingut], [Jahrgang])
+**Empfehlung: [Weinname]** ([Weingut], [Jahrgang])
 Begründung in 1–2 Sätzen.
+Servierform: [Flasche / halbe Flasche-Coravin / glasweise] – kurze Begründung.
 
-(optional zweiter Wein nach gleichem Schema)
+**Alternative: [Weinname]** ([Weingut], [Jahrgang])
+1 Satz: warum diese Alternative spannend ist (z.B. andere Stilistik, reifer, leichter).
 
 ## Gang 2: ...
 
-Wenn der Nutzer nur eine einzelne Speise nennt, behandle sie als einen Gang. Schließe mit einem kurzen Schluss­satz zur Gesamtdramaturgie.
+Wenn der Nutzer nur eine einzelne Speise nennt, behandle sie als einen Gang. Schließe mit einem kurzen Schluss­satz zur Gesamtdramaturgie.${guestBlock}
 
 Verfügbare Weine im Keller:
 ${wineList}`;
@@ -93,7 +101,7 @@ ${wineList}`;
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-5",
-        max_tokens: 1500,
+        max_tokens: 2000,
         system: systemPrompt,
         messages: [{ role: "user", content: menu }],
       }),

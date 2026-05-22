@@ -6,7 +6,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Clock, Sparkles, ShoppingBasket, Wine as WineIcon, Globe, Grape, Printer } from "lucide-react";
+import { AlertTriangle, Clock, Sparkles, ShoppingBasket, Wine as WineIcon, Globe, Grape, Printer, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import {
   getDrinkAlerts,
@@ -41,6 +41,18 @@ const Dashboard = () => {
   const alerts = useMemo(() => getDrinkAlerts(wines), [wines]);
   const gaps = useMemo(() => getPairingGaps(wines), [wines]);
   const stats = useMemo(() => getCellarStats(wines), [wines]);
+  const topValuable = useMemo(() => {
+    return [...wines]
+      .map((w) => {
+        const min = Number(w.price_min ?? 0);
+        const max = Number(w.price_max ?? w.price_min ?? 0);
+        const perBottle = max > 0 ? (min + max) / 2 : 0;
+        return { wine: w, perBottle, total: perBottle * w.bottle_count };
+      })
+      .filter((x) => x.perBottle > 0)
+      .sort((a, b) => b.perBottle - a.perBottle)
+      .slice(0, 10);
+  }, [wines]);
 
   const past = alerts.filter((a) => a.kind === "past");
   const peak = alerts.filter((a) => a.kind === "peak");
@@ -170,6 +182,39 @@ const Dashboard = () => {
                 </div>
               )}
             </Card>
+
+            {/* Top wertvolle Flaschen */}
+            {topValuable.length > 0 && (
+              <Card className="p-6 bg-card/60">
+                <div className="flex items-center gap-2 mb-1">
+                  <Trophy className="w-5 h-5 text-primary" />
+                  <h2 className="serif text-2xl font-semibold">Top 10 wertvollste Flaschen</h2>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Geschätzter Marktwert pro Flasche (Mittelwert von price_min/price_max).
+                </p>
+                <ol className="space-y-1.5">
+                  {topValuable.map((t, i) => (
+                    <li key={t.wine.id}>
+                      <Link
+                        to={`/wine/${t.wine.id}`}
+                        className="flex items-center justify-between gap-3 rounded-md border border-border bg-muted/20 px-3 py-2 text-sm hover:bg-accent/40 transition"
+                      >
+                        <span className="truncate">
+                          <span className="text-muted-foreground tabular-nums mr-2">{i + 1}.</span>
+                          <span className="font-medium">{t.wine.name}</span>
+                          {t.wine.vintage && <span className="text-muted-foreground"> · {t.wine.vintage}</span>}
+                          {t.wine.winery && <span className="text-muted-foreground"> · {t.wine.winery}</span>}
+                        </span>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap tabular-nums">
+                          {t.perBottle.toFixed(0)} € · {t.wine.bottle_count}× · ges. {t.total.toFixed(0)} €
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ol>
+              </Card>
+            )}
           </div>
         )}
       </main>
