@@ -7,7 +7,7 @@ import { WineCard } from "@/components/WineCard";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Search, Wine as WineIcon, Plus, ChefHat } from "lucide-react";
+import { Search, Wine as WineIcon, Plus, ChefHat, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { getDrinkStatus, type DrinkStatus } from "@/lib/drinkWindow";
 import { PAIRING_CATEGORIES, pairingCategoryEmoji } from "@/lib/pairingCategories";
@@ -40,6 +40,27 @@ const Cellar = () => {
   const [vintage, setVintage] = useState("all");
   const [drinkWindow, setDrinkWindow] = useState<"all" | DrinkStatus>("all");
   const [pairing, setPairing] = useState("all");
+  const [backfilling, setBackfilling] = useState(false);
+
+  const backfillCountries = async () => {
+    setBackfilling(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("backfill-countries");
+      if (error) throw error;
+      const d = data as { updated?: number; total?: number; failed?: number; error?: string };
+      if (d?.error) throw new Error(d.error);
+      toast.success(`Länder ergänzt: ${d.updated ?? 0} von ${d.total ?? 0}${d.failed ? ` (${d.failed} fehlgeschlagen)` : ""}`);
+      const { data: fresh } = await supabase
+        .from("wines")
+        .select("id, name, winery, vintage, grape_variety, region, country, rating, photo_url, bottle_count, drink_from, drink_to, pairing_categories")
+        .order("created_at", { ascending: false });
+      if (fresh) setWines(fresh as Wine[]);
+    } catch (e: any) {
+      toast.error(e.message ?? "Fehler beim Ergänzen der Länder");
+    } finally {
+      setBackfilling(false);
+    }
+  };
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -94,6 +115,19 @@ const Cellar = () => {
           <ChefHat className="w-5 h-5 mr-2" />
           KI-Sommelier: Weine zum Menü finden
         </Button>
+
+        {wines.some(w => !w.country) && (
+          <Button
+            onClick={backfillCountries}
+            disabled={backfilling}
+            variant="outline"
+            size="sm"
+            className="w-full sm:w-auto mb-6 sm:ml-2"
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            {backfilling ? "Ergänze Länder per KI..." : `Länder per KI ergänzen (${wines.filter(w => !w.country).length})`}
+          </Button>
+        )}
 
         <div className="flex flex-col gap-3 mb-6">
           <div className="relative">
