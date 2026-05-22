@@ -5,13 +5,16 @@ import { useAuth } from "@/hooks/useAuth";
 import { AppHeader } from "@/components/AppHeader";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ChefHat, Sparkles } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ChefHat, Sparkles, Users } from "lucide-react";
 import { toast } from "sonner";
 
 const Sommelier = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [menu, setMenu] = useState("");
+  const [guestCount, setGuestCount] = useState<string>("4");
   const [loading, setLoading] = useState(false);
   const [pairing, setPairing] = useState<string | null>(null);
 
@@ -27,8 +30,12 @@ const Sommelier = () => {
     setLoading(true);
     setPairing(null);
     try {
+      const guestNum = parseInt(guestCount, 10);
       const { data, error } = await supabase.functions.invoke("sommelier-menu", {
-        body: { menu: menu.trim() },
+        body: {
+          menu: menu.trim(),
+          guest_count: Number.isFinite(guestNum) && guestNum > 0 ? guestNum : undefined,
+        },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -52,7 +59,7 @@ const Sommelier = () => {
           </div>
           <div>
             <h1 className="serif text-3xl sm:text-4xl font-semibold">KI-Sommelier</h1>
-            <p className="text-muted-foreground text-sm">Beschreibe deine Speise oder dein Menü</p>
+            <p className="text-muted-foreground text-sm">Menü beschreiben – inkl. Glas/Flasche & Alternativen</p>
           </div>
         </div>
 
@@ -65,15 +72,32 @@ const Sommelier = () => {
             className="bg-card/50 resize-none"
             maxLength={3000}
           />
-          <Button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="w-full bg-bordeaux-gradient"
-            size="lg"
-          >
-            <Sparkles className="w-4 h-4 mr-2" />
-            {loading ? "Sommelier denkt nach..." : "Weine empfehlen lassen"}
-          </Button>
+
+          <div className="flex items-end gap-3">
+            <div className="flex-1 max-w-[160px]">
+              <Label htmlFor="guests" className="text-xs text-muted-foreground flex items-center gap-1 mb-1">
+                <Users className="w-3 h-3" /> Gäste
+              </Label>
+              <Input
+                id="guests"
+                type="number"
+                min={1}
+                max={50}
+                value={guestCount}
+                onChange={(e) => setGuestCount(e.target.value)}
+                className="bg-card/50"
+              />
+            </div>
+            <Button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="flex-1 bg-bordeaux-gradient"
+              size="lg"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              {loading ? "Sommelier denkt nach..." : "Weine empfehlen lassen"}
+            </Button>
+          </div>
         </div>
 
         {pairing && (
