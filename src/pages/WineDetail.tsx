@@ -7,13 +7,14 @@ import { StarRating } from "@/components/StarRating";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Edit, Wine as WineIcon, Sparkles, UtensilsCrossed, CalendarRange, Tag, GlassWater } from "lucide-react";
+import { ArrowLeft, Edit, Wine as WineIcon, Sparkles, UtensilsCrossed, CalendarRange, Tag, GlassWater, ChefHat } from "lucide-react";
 import { toast } from "sonner";
 import { getDrinkStatus, drinkStatusLabel, drinkStatusEmoji } from "@/lib/drinkWindow";
 import { pairingCategoryEmoji } from "@/lib/pairingCategories";
 import { WinePhoto } from "@/components/WinePhoto";
 import { ServiceDialog } from "@/components/ServiceDialog";
 import { TastingNotesSection } from "@/components/TastingNotesSection";
+import { ReversePairingDialog } from "@/components/ReversePairingDialog";
 
 const WineDetail = () => {
   const { id } = useParams();
@@ -23,6 +24,7 @@ const WineDetail = () => {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [serviceOpen, setServiceOpen] = useState(false);
+  const [reverseOpen, setReverseOpen] = useState(false);
 
   useEffect(() => { if (!authLoading && !user) navigate("/auth"); }, [user, authLoading, navigate]);
 
@@ -89,6 +91,9 @@ const WineDetail = () => {
                   className="bg-bordeaux-gradient shadow-glow"
                 >
                   <GlassWater className="w-4 h-4 mr-2" /> Servieren
+                </Button>
+                <Button variant="outline" onClick={() => setReverseOpen(true)}>
+                  <ChefHat className="w-4 h-4 mr-2" /> Was koche ich dazu?
                 </Button>
                 <Button variant="outline" onClick={() => navigate(`/wine/${wine.id}/edit`)}>
                   <Edit className="w-4 h-4 mr-2" /> Bearbeiten
@@ -197,6 +202,13 @@ const WineDetail = () => {
         onOpenChange={setServiceOpen}
         wine={wine}
         onServed={(c) => setWine({ ...wine, bottle_count: c })}
+      />
+
+      <ReversePairingDialog
+        open={reverseOpen}
+        onOpenChange={setReverseOpen}
+        wineId={wine.id}
+        wineName={wine.name}
       />
     </div>
   );
