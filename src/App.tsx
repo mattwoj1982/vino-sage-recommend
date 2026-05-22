@@ -15,6 +15,7 @@ import Share from "./pages/Share";
 import PublicCellar from "./pages/PublicCellar";
 import PublicWineDetail from "./pages/PublicWineDetail";
 import Menus from "./pages/Menus";
+import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/recommend" element={<Recommend />} />
             <Route path="/sommelier" element={<Sommelier />} />
             <Route path="/menus" element={<Menus />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/share" element={<Share />} />
             <Route path="/keller/:token" element={<PublicCellar />} />
             <Route path="/keller/:token/wein/:id" element={<PublicWineDetail />} />
