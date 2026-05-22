@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Wine, LogOut, Sparkles, Share2, Plus, BookOpen } from "lucide-react";
+import { Wine, LogOut, Sparkles, Share2, Plus, BookOpen, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 
@@ -17,6 +17,10 @@ export const AppHeader = () => {
           <span className="serif text-xl font-semibold hidden sm:inline">Mein Weinkeller</span>
         </Link>
         <nav className="flex items-center gap-1 sm:gap-2">
+          <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")}>
+            <LayoutDashboard className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Dashboard</span>
+          </Button>
           <Button variant="ghost" size="sm" onClick={() => navigate("/menus")}>
             <BookOpen className="w-4 h-4 sm:mr-2" />
             <span className="hidden sm:inline">Menüs</span>
