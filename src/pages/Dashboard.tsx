@@ -6,7 +6,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Clock, Sparkles, ShoppingBasket, Wine as WineIcon, Globe, Grape, Printer } from "lucide-react";
+import { AlertTriangle, Clock, Sparkles, ShoppingBasket, Wine as WineIcon, Globe, Grape, Printer, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import {
   getDrinkAlerts,
@@ -41,6 +41,18 @@ const Dashboard = () => {
   const alerts = useMemo(() => getDrinkAlerts(wines), [wines]);
   const gaps = useMemo(() => getPairingGaps(wines), [wines]);
   const stats = useMemo(() => getCellarStats(wines), [wines]);
+  const topValuable = useMemo(() => {
+    return [...wines]
+      .map((w) => {
+        const min = Number(w.price_min ?? 0);
+        const max = Number(w.price_max ?? w.price_min ?? 0);
+        const perBottle = max > 0 ? (min + max) / 2 : 0;
+        return { wine: w, perBottle, total: perBottle * w.bottle_count };
+      })
+      .filter((x) => x.perBottle > 0)
+      .sort((a, b) => b.perBottle - a.perBottle)
+      .slice(0, 10);
+  }, [wines]);
 
   const past = alerts.filter((a) => a.kind === "past");
   const peak = alerts.filter((a) => a.kind === "peak");
