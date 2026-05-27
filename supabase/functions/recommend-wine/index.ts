@@ -116,7 +116,7 @@ ${wineList}${budgetSection}`;
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-5",
-        max_tokens: 600,
+        max_tokens: 900,
         system: systemPrompt,
         messages: [{ role: "user", content: prompt }],
       }),
