@@ -197,7 +197,47 @@ ${wineList}`;
     }
 
     const data = await response.json();
-    const pairing = data.content?.[0]?.text ?? "Keine Empfehlung erhalten.";
+    const rawText = data.content?.[0]?.text ?? "";
+    let pairing = "Keine Empfehlung erhalten.";
+
+    try {
+      const parsed = extractJson(rawText) as {
+        title?: string;
+        courses?: Array<{
+          course?: string;
+          mainWineId?: string;
+          mainReason?: string;
+          serving?: string;
+          everydayWineId?: string;
+          everydayReason?: string;
+        }>;
+        closing?: string;
+      };
+
+      const lines: string[] = [`# ${parsed.title || "Weinempfehlung"}`];
+      for (const [index, course] of (parsed.courses || []).entries()) {
+        const mainWine = course.mainWineId ? wineById.get(course.mainWineId) : null;
+        const everydayWine = course.everydayWineId ? wineById.get(course.everydayWineId) : null;
+        lines.push(
+          "",
+          `## ${course.course || `Gang ${index + 1}`}`,
+          "",
+          `**🍷 Hauptempfehlung: ${mainWine ? displayWine(mainWine) : "Kein passender Wein gefunden"} (${mainWine ? formatPrice(mainWine) : "Preis unbekannt"})**`,
+          course.mainReason || "Diese Auswahl passt am besten zum beschriebenen Gang.",
+          course.serving || "Servierform: je nach Gästezahl und Gangfolge dosieren.",
+          "",
+          everydayWine
+            ? `**💶 Alltags-Option: ${displayWine(everydayWine)} (${formatPrice(everydayWine)})**`
+            : "**💶 Alltags-Option: Keine passende günstigere Alternative im Keller**",
+          course.everydayReason || "Für diesen Gang ist keine passende preisbewusste Alternative aus der unteren Preishälfte hinterlegt."
+        );
+      }
+      if (parsed.closing) lines.push("", parsed.closing);
+      pairing = lines.join("\n");
+    } catch (jsonErr) {
+      console.error("sommelier JSON parse error", jsonErr, rawText);
+      pairing = rawText || pairing;
+    }
 
     return new Response(JSON.stringify({ pairing }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
