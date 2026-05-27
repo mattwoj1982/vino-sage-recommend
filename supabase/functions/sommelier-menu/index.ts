@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
 
     const { data: wines, error: winesErr } = await supabase
       .from("wines")
-      .select("id, name, winery, vintage, grape_variety, region, rating, notes, bottle_count, drink_from, drink_to, food_pairing, pairing_categories")
+      .select("id, name, winery, vintage, grape_variety, region, rating, notes, bottle_count, drink_from, drink_to, food_pairing, pairing_categories, price_min, price_max")
       .eq("user_id", user.id)
       .gt("bottle_count", 0);
     if (winesErr) throw winesErr;
@@ -119,29 +119,56 @@ Deno.serve(async (req) => {
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const wineList = wines.map((w, i) =>
-      `${i + 1}. "${w.name}" – ${w.winery ?? "?"}, ${w.vintage ?? "?"}, ${w.grape_variety ?? "?"}, ${w.region ?? "?"}, Bewertung: ${w.rating ?? "-"}/5, ${w.bottle_count} Flasche(n)${w.food_pairing ? `, Speise: ${w.food_pairing}` : ""}${w.pairing_categories?.length ? `, Kategorien: ${w.pairing_categories.join(", ")}` : ""}${w.notes ? `, Notizen: ${w.notes}` : ""}`
+    const typedWines = wines as Wine[];
+    const wineById = new Map(typedWines.map((wine) => [wine.id, wine]));
+    const pricedWines = typedWines
+      .map((wine) => ({ ...wine, _avgPrice: averagePrice(wine) }))
+      .filter((wine) => wine._avgPrice > 0);
+    const cellarAvg = pricedWines.length
+      ? pricedWines.reduce((sum, wine) => sum + wine._avgPrice, 0) / pricedWines.length
+      : 0;
+    const budgetWines = cellarAvg > 0 ? pricedWines.filter((wine) => wine._avgPrice <= cellarAvg) : [];
+
+    const wineList = typedWines.map((w, i) =>
+      `${i + 1}. ID: ${w.id} | "${w.name}" – ${w.winery ?? "?"}, ${w.vintage ?? "?"}, ${w.grape_variety ?? "?"}, ${w.region ?? "?"}, Preis: ${formatPrice(w)}, Bewertung: ${w.rating ?? "-"}/5, ${w.bottle_count} Flasche(n)${w.food_pairing ? `, Speise: ${w.food_pairing}` : ""}${w.pairing_categories?.length ? `, Kategorien: ${w.pairing_categories.join(", ")}` : ""}${w.notes ? `, Notizen: ${w.notes}` : ""}`
     ).join("\n");
+
+    const budgetList = budgetWines.length
+      ? budgetWines.map((w) => `- ID: ${w.id} | "${w.name}" – ${w.winery ?? "?"}, ${w.vintage ?? "?"}, Preis: ${formatPrice(w)}`).join("\n")
+      : "Keine Weine mit Preisdaten in der unteren Preishälfte vorhanden.";
 
     const guestBlock = guestCount
       ? `\n\nGästeanzahl: ${guestCount}. Rechne pro Gang ca. 0,15 l Wein pro Gast (ganze Flasche = 0,75 l). Gib **pro Hauptempfehlung** explizit an, ob eine **ganze Flasche** sinnvoll ist, eine **halbe Flasche / Coravin** reicht, oder ob es **glasweise** sein sollte. Begründe das mit Gäste­anzahl und Gangzahl.`
       : `\n\nGib pro Empfehlung einen kurzen Hinweis zur Servierform (Flasche, halbe Flasche/Coravin, glasweise).`;
 
-    const systemPrompt = `Du bist ein erfahrener KI-Sommelier. Der Nutzer beschreibt eine Speise oder ein mehrgängiges Menü. Wähle aus dem verfügbaren Weinkeller die passenden Weine aus. Verwende ausschließlich Weine aus der Liste.
+    const systemPrompt = `Du bist ein erfahrener KI-Sommelier. Der Nutzer beschreibt eine Speise oder ein mehrgängiges Menü. Wähle ausschließlich Weine aus den Listen.
 
-Antworte auf Deutsch in folgendem Markdown-Format pro Gang:
+Antworte NUR als valides JSON ohne Markdown-Codeblock, ohne Zusatztext:
+{
+  "title": "Weinempfehlung zu ...",
+  "courses": [
+    {
+      "course": "Gang 1: ...",
+      "mainWineId": "ID aus der Kellerliste",
+      "mainReason": "1–2 Sätze Begründung.",
+      "serving": "Servierform: ganze Flasche / halbe Flasche-Coravin / glasweise – kurze Begründung.",
+      "everydayWineId": "ID aus der Liste untere Preishälfte oder leer",
+      "everydayReason": "1–2 Sätze, warum diese preisbewusste Alltags-Option passt, oder Hinweis, dass keine passende vorhanden ist."
+    }
+  ],
+  "closing": "Kurzer Satz zur Gesamtdramaturgie."
+}
 
-## Gang 1: [Speise]
-**Empfehlung: [Weinname]** ([Weingut], [Jahrgang])
-Begründung in 1–2 Sätzen.
-Servierform: [Flasche / halbe Flasche-Coravin / glasweise] – kurze Begründung.
+Zwingende Regeln:
+- mainWineId muss aus der vollständigen Kellerliste stammen.
+- everydayWineId muss, wenn möglich, ein anderer Wein sein und aus der Liste "Untere Preishälfte" stammen.
+- Erfinde keine Preise und keine Weinnamen. Preise werden serverseitig ergänzt.
+- Wenn der Nutzer nur eine einzelne Speise nennt, behandle sie als einen Gang.${guestBlock}
 
-**Alternative: [Weinname]** ([Weingut], [Jahrgang])
-1 Satz: warum diese Alternative spannend ist (z.B. andere Stilistik, reifer, leichter).
+Kellerdurchschnitt: ${cellarAvg > 0 ? cellarAvg.toFixed(0) + " CHF" : "unbekannt"}
 
-## Gang 2: ...
-
-Wenn der Nutzer nur eine einzelne Speise nennt, behandle sie als einen Gang. Schließe mit einem kurzen Schluss­satz zur Gesamtdramaturgie.${guestBlock}
+Untere Preishälfte / Alltags-Optionen:
+${budgetList}
 
 Verfügbare Weine im Keller:
 ${wineList}`;
