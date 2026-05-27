@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
 
     const { data: wines, error: winesErr } = await supabase
       .from("wines")
-      .select("id, name, winery, vintage, grape_variety, region, rating, notes, bottle_count")
+      .select("id, name, winery, vintage, grape_variety, region, rating, notes, bottle_count, price_min, price_max")
       .eq("user_id", user.id)
       .gt("bottle_count", 0);
 
@@ -67,14 +67,45 @@ Deno.serve(async (req) => {
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const wineList = wines.map((w, i) =>
-      `${i + 1}. "${w.name}" – ${w.winery ?? "?"}, ${w.vintage ?? "?"}, ${w.grape_variety ?? "?"}, ${w.region ?? "?"}, Bewertung: ${w.rating ?? "-"}/5, ${w.bottle_count} Flasche(n)${w.notes ? `, Notizen: ${w.notes}` : ""}`
+    // Durchschnittspreis berechnen (Mittel aus price_min/max je Wein)
+    const pricedWines = wines
+      .map((w: any) => {
+        const min = Number(w.price_min) || 0;
+        const max = Number(w.price_max) || 0;
+        const avg = min > 0 && max > 0 ? (min + max) / 2 : (max || min || 0);
+        return { ...w, _avgPrice: avg };
+      })
+      .filter((w: any) => w._avgPrice > 0);
+
+    const cellarAvg = pricedWines.length > 0
+      ? pricedWines.reduce((s: number, w: any) => s + w._avgPrice, 0) / pricedWines.length
+      : 0;
+
+    const budgetWines = pricedWines.filter((w: any) => w._avgPrice <= cellarAvg);
+
+    const fmtPrice = (w: any) => {
+      if (w.price_min && w.price_max) return `${w.price_min}–${w.price_max} CHF`;
+      if (w.price_max) return `${w.price_max} CHF`;
+      if (w.price_min) return `${w.price_min} CHF`;
+      return "Preis unbekannt";
+    };
+
+    const wineList = wines.map((w: any, i: number) =>
+      `${i + 1}. "${w.name}" – ${w.winery ?? "?"}, ${w.vintage ?? "?"}, ${w.grape_variety ?? "?"}, ${w.region ?? "?"}, Bewertung: ${w.rating ?? "-"}/5, ${w.bottle_count} Flasche(n), Preis: ${fmtPrice(w)}${w.notes ? `, Notizen: ${w.notes}` : ""}`
     ).join("\n");
 
-    const systemPrompt = `Du bist ein erfahrener Sommelier. Empfehle aus dem unten aufgeführten Weinkeller den passendsten Wein für den Anlass des Nutzers. Antworte auf Deutsch, kurz und elegant (max. 4-6 Sätze). Nenne den Wein mit Namen und begründe charmant, warum er passt.
+    const budgetSection = budgetWines.length > 0
+      ? `\n\nWeine in der unteren Preishälfte (≤ ${cellarAvg.toFixed(0)} CHF, Kellerdurchschnitt):\n${budgetWines.map((w: any) => `- "${w.name}" (${fmtPrice(w)})`).join("\n")}`
+      : `\n\nHinweis: Es liegen keine ausreichenden Preisdaten vor, um eine günstigere Alternative zu identifizieren.`;
+
+    const systemPrompt = `Du bist ein erfahrener Sommelier. Empfehle aus dem unten aufgeführten Weinkeller den passendsten Wein für den Anlass des Nutzers. Antworte auf Deutsch, kurz und elegant.
+
+Struktur deiner Antwort:
+1. **Hauptempfehlung**: Der ideale Wein – nenne ihn mit Namen und begründe charmant (2–3 Sätze).
+2. **Preisbewusste Alternative**: Empfiehl zusätzlich einen Wein aus der unteren Preishälfte des Kellers (Kellerdurchschnitt: ${cellarAvg > 0 ? cellarAvg.toFixed(0) + " CHF" : "unbekannt"}), der ebenfalls gut zum Anlass passt. Begründe kurz (1–2 Sätze). Falls keine geeignete günstigere Option vorhanden ist, weise höflich darauf hin.
 
 Verfügbare Weine im Keller:
-${wineList}`;
+${wineList}${budgetSection}`;
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
