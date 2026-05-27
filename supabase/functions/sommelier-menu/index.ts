@@ -5,6 +5,60 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+type Wine = {
+  id: string;
+  name: string;
+  winery: string | null;
+  vintage: string | number | null;
+  grape_variety: string | null;
+  region: string | null;
+  rating: number | null;
+  notes: string | null;
+  bottle_count: number;
+  drink_from: number | null;
+  drink_to: number | null;
+  food_pairing: string | null;
+  pairing_categories: string[] | null;
+  price_min: number | null;
+  price_max: number | null;
+};
+
+const formatPrice = (wine: Pick<Wine, "price_min" | "price_max">) => {
+  const min = Number(wine.price_min) || 0;
+  const max = Number(wine.price_max) || 0;
+  if (min > 0 && max > 0 && min !== max) return `${min}–${max} CHF`;
+  if (max > 0) return `${max} CHF`;
+  if (min > 0) return `${min} CHF`;
+  return "Preis unbekannt";
+};
+
+const averagePrice = (wine: Pick<Wine, "price_min" | "price_max">) => {
+  const min = Number(wine.price_min) || 0;
+  const max = Number(wine.price_max) || 0;
+  if (min > 0 && max > 0) return (min + max) / 2;
+  return max || min || 0;
+};
+
+const displayWine = (wine: Wine) => {
+  const vintage = wine.vintage ? ` ${wine.vintage}` : "";
+  const winery = wine.winery ? ` (${wine.winery})` : "";
+  return `${wine.name}${vintage}${winery}`;
+};
+
+const extractJson = (text: string) => {
+  const cleaned = text.replace(/```json\s*/gi, "").replace(/```/g, "").trim();
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  if (start === -1 || end === -1 || end <= start) throw new Error("Keine JSON-Antwort erhalten");
+  return JSON.parse(
+    cleaned
+      .slice(start, end + 1)
+      .replace(/,\s*}/g, "}")
+      .replace(/,\s*]/g, "]")
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
+  );
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
