@@ -5,6 +5,60 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+type Wine = {
+  id: string;
+  name: string;
+  winery: string | null;
+  vintage: string | number | null;
+  grape_variety: string | null;
+  region: string | null;
+  rating: number | null;
+  notes: string | null;
+  bottle_count: number;
+  drink_from: number | null;
+  drink_to: number | null;
+  food_pairing: string | null;
+  pairing_categories: string[] | null;
+  price_min: number | null;
+  price_max: number | null;
+};
+
+const formatPrice = (wine: Pick<Wine, "price_min" | "price_max">) => {
+  const min = Number(wine.price_min) || 0;
+  const max = Number(wine.price_max) || 0;
+  if (min > 0 && max > 0 && min !== max) return `${min}–${max} CHF`;
+  if (max > 0) return `${max} CHF`;
+  if (min > 0) return `${min} CHF`;
+  return "Preis unbekannt";
+};
+
+const averagePrice = (wine: Pick<Wine, "price_min" | "price_max">) => {
+  const min = Number(wine.price_min) || 0;
+  const max = Number(wine.price_max) || 0;
+  if (min > 0 && max > 0) return (min + max) / 2;
+  return max || min || 0;
+};
+
+const displayWine = (wine: Wine) => {
+  const vintage = wine.vintage ? ` ${wine.vintage}` : "";
+  const winery = wine.winery ? ` (${wine.winery})` : "";
+  return `${wine.name}${vintage}${winery}`;
+};
+
+const extractJson = (text: string) => {
+  const cleaned = text.replace(/```json\s*/gi, "").replace(/```/g, "").trim();
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  if (start === -1 || end === -1 || end <= start) throw new Error("Keine JSON-Antwort erhalten");
+  return JSON.parse(
+    cleaned
+      .slice(start, end + 1)
+      .replace(/,\s*}/g, "}")
+      .replace(/,\s*]/g, "]")
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
+  );
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -54,7 +108,7 @@ Deno.serve(async (req) => {
 
     const { data: wines, error: winesErr } = await supabase
       .from("wines")
-      .select("id, name, winery, vintage, grape_variety, region, rating, notes, bottle_count, drink_from, drink_to, food_pairing, pairing_categories")
+      .select("id, name, winery, vintage, grape_variety, region, rating, notes, bottle_count, drink_from, drink_to, food_pairing, pairing_categories, price_min, price_max")
       .eq("user_id", user.id)
       .gt("bottle_count", 0);
     if (winesErr) throw winesErr;
@@ -65,29 +119,56 @@ Deno.serve(async (req) => {
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const wineList = wines.map((w, i) =>
-      `${i + 1}. "${w.name}" – ${w.winery ?? "?"}, ${w.vintage ?? "?"}, ${w.grape_variety ?? "?"}, ${w.region ?? "?"}, Bewertung: ${w.rating ?? "-"}/5, ${w.bottle_count} Flasche(n)${w.food_pairing ? `, Speise: ${w.food_pairing}` : ""}${w.pairing_categories?.length ? `, Kategorien: ${w.pairing_categories.join(", ")}` : ""}${w.notes ? `, Notizen: ${w.notes}` : ""}`
+    const typedWines = wines as Wine[];
+    const wineById = new Map(typedWines.map((wine) => [wine.id, wine]));
+    const pricedWines = typedWines
+      .map((wine) => ({ ...wine, _avgPrice: averagePrice(wine) }))
+      .filter((wine) => wine._avgPrice > 0);
+    const cellarAvg = pricedWines.length
+      ? pricedWines.reduce((sum, wine) => sum + wine._avgPrice, 0) / pricedWines.length
+      : 0;
+    const budgetWines = cellarAvg > 0 ? pricedWines.filter((wine) => wine._avgPrice <= cellarAvg) : [];
+
+    const wineList = typedWines.map((w, i) =>
+      `${i + 1}. ID: ${w.id} | "${w.name}" – ${w.winery ?? "?"}, ${w.vintage ?? "?"}, ${w.grape_variety ?? "?"}, ${w.region ?? "?"}, Preis: ${formatPrice(w)}, Bewertung: ${w.rating ?? "-"}/5, ${w.bottle_count} Flasche(n)${w.food_pairing ? `, Speise: ${w.food_pairing}` : ""}${w.pairing_categories?.length ? `, Kategorien: ${w.pairing_categories.join(", ")}` : ""}${w.notes ? `, Notizen: ${w.notes}` : ""}`
     ).join("\n");
+
+    const budgetList = budgetWines.length
+      ? budgetWines.map((w) => `- ID: ${w.id} | "${w.name}" – ${w.winery ?? "?"}, ${w.vintage ?? "?"}, Preis: ${formatPrice(w)}`).join("\n")
+      : "Keine Weine mit Preisdaten in der unteren Preishälfte vorhanden.";
 
     const guestBlock = guestCount
       ? `\n\nGästeanzahl: ${guestCount}. Rechne pro Gang ca. 0,15 l Wein pro Gast (ganze Flasche = 0,75 l). Gib **pro Hauptempfehlung** explizit an, ob eine **ganze Flasche** sinnvoll ist, eine **halbe Flasche / Coravin** reicht, oder ob es **glasweise** sein sollte. Begründe das mit Gäste­anzahl und Gangzahl.`
       : `\n\nGib pro Empfehlung einen kurzen Hinweis zur Servierform (Flasche, halbe Flasche/Coravin, glasweise).`;
 
-    const systemPrompt = `Du bist ein erfahrener KI-Sommelier. Der Nutzer beschreibt eine Speise oder ein mehrgängiges Menü. Wähle aus dem verfügbaren Weinkeller die passenden Weine aus. Verwende ausschließlich Weine aus der Liste.
+    const systemPrompt = `Du bist ein erfahrener KI-Sommelier. Der Nutzer beschreibt eine Speise oder ein mehrgängiges Menü. Wähle ausschließlich Weine aus den Listen.
 
-Antworte auf Deutsch in folgendem Markdown-Format pro Gang:
+Antworte NUR als valides JSON ohne Markdown-Codeblock, ohne Zusatztext:
+{
+  "title": "Weinempfehlung zu ...",
+  "courses": [
+    {
+      "course": "Gang 1: ...",
+      "mainWineId": "ID aus der Kellerliste",
+      "mainReason": "1–2 Sätze Begründung.",
+      "serving": "Servierform: ganze Flasche / halbe Flasche-Coravin / glasweise – kurze Begründung.",
+      "everydayWineId": "ID aus der Liste untere Preishälfte oder leer",
+      "everydayReason": "1–2 Sätze, warum diese preisbewusste Alltags-Option passt, oder Hinweis, dass keine passende vorhanden ist."
+    }
+  ],
+  "closing": "Kurzer Satz zur Gesamtdramaturgie."
+}
 
-## Gang 1: [Speise]
-**Empfehlung: [Weinname]** ([Weingut], [Jahrgang])
-Begründung in 1–2 Sätzen.
-Servierform: [Flasche / halbe Flasche-Coravin / glasweise] – kurze Begründung.
+Zwingende Regeln:
+- mainWineId muss aus der vollständigen Kellerliste stammen.
+- everydayWineId muss, wenn möglich, ein anderer Wein sein und aus der Liste "Untere Preishälfte" stammen.
+- Erfinde keine Preise und keine Weinnamen. Preise werden serverseitig ergänzt.
+- Wenn der Nutzer nur eine einzelne Speise nennt, behandle sie als einen Gang.${guestBlock}
 
-**Alternative: [Weinname]** ([Weingut], [Jahrgang])
-1 Satz: warum diese Alternative spannend ist (z.B. andere Stilistik, reifer, leichter).
+Kellerdurchschnitt: ${cellarAvg > 0 ? cellarAvg.toFixed(0) + " CHF" : "unbekannt"}
 
-## Gang 2: ...
-
-Wenn der Nutzer nur eine einzelne Speise nennt, behandle sie als einen Gang. Schließe mit einem kurzen Schluss­satz zur Gesamtdramaturgie.${guestBlock}
+Untere Preishälfte / Alltags-Optionen:
+${budgetList}
 
 Verfügbare Weine im Keller:
 ${wineList}`;
@@ -116,7 +197,47 @@ ${wineList}`;
     }
 
     const data = await response.json();
-    const pairing = data.content?.[0]?.text ?? "Keine Empfehlung erhalten.";
+    const rawText = data.content?.[0]?.text ?? "";
+    let pairing = "Keine Empfehlung erhalten.";
+
+    try {
+      const parsed = extractJson(rawText) as {
+        title?: string;
+        courses?: Array<{
+          course?: string;
+          mainWineId?: string;
+          mainReason?: string;
+          serving?: string;
+          everydayWineId?: string;
+          everydayReason?: string;
+        }>;
+        closing?: string;
+      };
+
+      const lines: string[] = [`# ${parsed.title || "Weinempfehlung"}`];
+      for (const [index, course] of (parsed.courses || []).entries()) {
+        const mainWine = course.mainWineId ? wineById.get(course.mainWineId) : null;
+        const everydayWine = course.everydayWineId ? wineById.get(course.everydayWineId) : null;
+        lines.push(
+          "",
+          `## ${course.course || `Gang ${index + 1}`}`,
+          "",
+          `**🍷 Hauptempfehlung: ${mainWine ? displayWine(mainWine) : "Kein passender Wein gefunden"} (${mainWine ? formatPrice(mainWine) : "Preis unbekannt"})**`,
+          course.mainReason || "Diese Auswahl passt am besten zum beschriebenen Gang.",
+          course.serving || "Servierform: je nach Gästezahl und Gangfolge dosieren.",
+          "",
+          everydayWine
+            ? `**💶 Alltags-Option: ${displayWine(everydayWine)} (${formatPrice(everydayWine)})**`
+            : "**💶 Alltags-Option: Keine passende günstigere Alternative im Keller**",
+          course.everydayReason || "Für diesen Gang ist keine passende preisbewusste Alternative aus der unteren Preishälfte hinterlegt."
+        );
+      }
+      if (parsed.closing) lines.push("", parsed.closing);
+      pairing = lines.join("\n");
+    } catch (jsonErr) {
+      console.error("sommelier JSON parse error", jsonErr, rawText);
+      pairing = rawText || pairing;
+    }
 
     return new Response(JSON.stringify({ pairing }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
