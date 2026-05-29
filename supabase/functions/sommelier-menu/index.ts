@@ -227,8 +227,8 @@ ${wineList}`;
           course.serving || "Servierform: je nach Gästezahl und Gangfolge dosieren.",
           "",
           everydayWine
-            ? `**💶 Alltags-Option: ${displayWine(everydayWine)} (${formatPrice(everydayWine)})**`
-            : "**💶 Alltags-Option: Keine passende günstigere Alternative im Keller**",
+            ? `**💰 Alltags-Option: ${displayWine(everydayWine)} (${formatPrice(everydayWine)})**`
+            : "**💰 Alltags-Option: Keine passende günstigere Alternative im Keller**",
           course.everydayReason || "Für diesen Gang ist keine passende preisbewusste Alternative aus der unteren Preishälfte hinterlegt."
         );
       }

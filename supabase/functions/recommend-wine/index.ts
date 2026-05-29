@@ -106,12 +106,12 @@ ABSOLUT VERPFLICHTENDES ANTWORTFORMAT – halte dich exakt daran, ohne Abweichun
 [Weinname Jahrgang] ([Preis])
 [2–3 Sätze charmante Begründung, warum dieser Wein zum Anlass passt.]
 
-**💶 Alltags-Option**
+**💰 Alltags-Option**
 [Weinname Jahrgang] ([Preis])
 [1–2 Sätze: unkomplizierte, preisbewusste Wahl aus der unteren Preishälfte des Kellers, die ebenfalls zum Anlass passt.]
 
 REGELN (zwingend):
-- Du MUSST IMMER beide Abschnitte ausgeben, mit den exakten Überschriften "**🍷 Hauptempfehlung**" und "**💶 Alltags-Option**".
+- Du MUSST IMMER beide Abschnitte ausgeben, mit den exakten Überschriften "**🍷 Hauptempfehlung**" und "**💰 Alltags-Option**".
 - Du MUSST IMMER direkt hinter jedem Weinnamen den Preis in runden Klammern angeben, z.B. "Château X 2018 (45 CHF)" oder "(30–40 CHF)" bei Preisspanne. Wenn kein Preis hinterlegt ist, schreibe "(Preis unbekannt)".
 - Die Alltags-Option MUSS ein anderer Wein als die Hauptempfehlung sein und aus der unten gelisteten "untere Preishälfte" stammen (Kellerdurchschnitt: ${cellarAvg > 0 ? cellarAvg.toFixed(0) + " CHF" : "unbekannt"}).
 - Falls keine geeignete Alltags-Option existiert, gib den Abschnitt trotzdem mit Überschrift aus und schreibe darunter höflich, dass im Keller keine passende günstigere Alternative vorhanden ist.
