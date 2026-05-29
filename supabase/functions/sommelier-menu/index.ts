@@ -26,9 +26,9 @@ type Wine = {
 const formatPrice = (wine: Pick<Wine, "price_min" | "price_max">) => {
   const min = Number(wine.price_min) || 0;
   const max = Number(wine.price_max) || 0;
-  if (min > 0 && max > 0 && min !== max) return `${min}–${max} CHF`;
-  if (max > 0) return `${max} CHF`;
-  if (min > 0) return `${min} CHF`;
+  if (min > 0 && max > 0 && min !== max) return `${min}–${max} EUR`;
+  if (max > 0) return `${max} EUR`;
+  if (min > 0) return `${min} EUR`;
   return "Preis unbekannt";
 };
 
@@ -165,7 +165,7 @@ Zwingende Regeln:
 - Erfinde keine Preise und keine Weinnamen. Preise werden serverseitig ergänzt.
 - Wenn der Nutzer nur eine einzelne Speise nennt, behandle sie als einen Gang.${guestBlock}
 
-Kellerdurchschnitt: ${cellarAvg > 0 ? cellarAvg.toFixed(0) + " CHF" : "unbekannt"}
+Kellerdurchschnitt: ${cellarAvg > 0 ? cellarAvg.toFixed(0) + " EUR" : "unbekannt"}
 
 Untere Preishälfte / Alltags-Optionen:
 ${budgetList}

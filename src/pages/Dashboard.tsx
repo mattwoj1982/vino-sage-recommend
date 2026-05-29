@@ -87,13 +87,13 @@ const Dashboard = () => {
               <StatCard icon={<Globe className="w-4 h-4" />} label="Länder" value={stats.countries} />
               <StatCard icon={<Grape className="w-4 h-4" />} label="Rebsorten" value={stats.grapes} />
               <StatCard
-                icon={<span className="text-xs font-semibold leading-none">CHF</span>}
+                icon={<span className="text-xs font-semibold leading-none">EUR</span>}
                 label="Bestandswert"
                 value={
                   stats.estimatedValueMax > 0
                     ? stats.estimatedValueMin === stats.estimatedValueMax
-                      ? `${stats.estimatedValueMin.toFixed(0)} CHF`
-                      : `${stats.estimatedValueMin.toFixed(0)}–${stats.estimatedValueMax.toFixed(0)} CHF`
+                      ? `${stats.estimatedValueMin.toFixed(0)} EUR`
+                      : `${stats.estimatedValueMin.toFixed(0)}–${stats.estimatedValueMax.toFixed(0)} EUR`
                     : "–"
                 }
               />

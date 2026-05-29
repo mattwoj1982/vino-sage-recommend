@@ -84,9 +84,9 @@ Deno.serve(async (req) => {
     const budgetWines = pricedWines.filter((w: any) => w._avgPrice <= cellarAvg);
 
     const fmtPrice = (w: any) => {
-      if (w.price_min && w.price_max) return `${w.price_min}–${w.price_max} CHF`;
-      if (w.price_max) return `${w.price_max} CHF`;
-      if (w.price_min) return `${w.price_min} CHF`;
+      if (w.price_min && w.price_max) return `${w.price_min}–${w.price_max} EUR`;
+      if (w.price_max) return `${w.price_max} EUR`;
+      if (w.price_min) return `${w.price_min} EUR`;
       return "Preis unbekannt";
     };
 
@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
     ).join("\n");
 
     const budgetSection = budgetWines.length > 0
-      ? `\n\nWeine in der unteren Preishälfte (≤ ${cellarAvg.toFixed(0)} CHF, Kellerdurchschnitt):\n${budgetWines.map((w: any) => `- "${w.name}" (${fmtPrice(w)})`).join("\n")}`
+      ? `\n\nWeine in der unteren Preishälfte (≤ ${cellarAvg.toFixed(0)} EUR, Kellerdurchschnitt):\n${budgetWines.map((w: any) => `- "${w.name}" (${fmtPrice(w)})`).join("\n")}`
       : `\n\nHinweis: Es liegen keine ausreichenden Preisdaten vor, um eine günstigere Alternative zu identifizieren.`;
 
     const systemPrompt = `Du bist ein erfahrener Sommelier. Empfehle aus dem unten aufgeführten Weinkeller passende Weine für den Anlass des Nutzers. Antworte auf Deutsch, kurz und elegant.
@@ -112,8 +112,8 @@ ABSOLUT VERPFLICHTENDES ANTWORTFORMAT – halte dich exakt daran, ohne Abweichun
 
 REGELN (zwingend):
 - Du MUSST IMMER beide Abschnitte ausgeben, mit den exakten Überschriften "**🍷 Hauptempfehlung**" und "**💰 Alltags-Option**".
-- Du MUSST IMMER direkt hinter jedem Weinnamen den Preis in runden Klammern angeben, z.B. "Château X 2018 (45 CHF)" oder "(30–40 CHF)" bei Preisspanne. Wenn kein Preis hinterlegt ist, schreibe "(Preis unbekannt)".
-- Die Alltags-Option MUSS ein anderer Wein als die Hauptempfehlung sein und aus der unten gelisteten "untere Preishälfte" stammen (Kellerdurchschnitt: ${cellarAvg > 0 ? cellarAvg.toFixed(0) + " CHF" : "unbekannt"}).
+- Du MUSST IMMER direkt hinter jedem Weinnamen den Preis in runden Klammern angeben, z.B. "Château X 2018 (45 EUR)" oder "(30–40 EUR)" bei Preisspanne. Wenn kein Preis hinterlegt ist, schreibe "(Preis unbekannt)".
+- Die Alltags-Option MUSS ein anderer Wein als die Hauptempfehlung sein und aus der unten gelisteten "untere Preishälfte" stammen (Kellerdurchschnitt: ${cellarAvg > 0 ? cellarAvg.toFixed(0) + " EUR" : "unbekannt"}).
 - Falls keine geeignete Alltags-Option existiert, gib den Abschnitt trotzdem mit Überschrift aus und schreibe darunter höflich, dass im Keller keine passende günstigere Alternative vorhanden ist.
 - Keine zusätzlichen Abschnitte, keine Einleitung, kein Abschlussgruß.
 
