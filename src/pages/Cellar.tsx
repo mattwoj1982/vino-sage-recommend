@@ -80,7 +80,13 @@ const Cellar = () => {
   }, [user]);
 
   const grapes = useMemo(() => Array.from(new Set(wines.map(w => w.grape_variety).filter(Boolean))) as string[], [wines]);
-  const regions = useMemo(() => Array.from(new Set(wines.map(w => w.region).filter(Boolean))) as string[], [wines]);
+  const regions = useMemo(() => Array.from(new Set(
+    wines.filter(w => country === "all" || w.country === country).map(w => w.region).filter(Boolean)
+  )).sort() as string[], [wines, country]);
+
+  useEffect(() => {
+    if (region !== "all" && !regions.includes(region)) setRegion("all");
+  }, [regions, region]);
   const countries = useMemo(() => Array.from(new Set(wines.map(w => w.country).filter(Boolean))).sort() as string[], [wines]);
   const vintages = useMemo(() => Array.from(new Set(wines.map(w => w.vintage).filter(Boolean))).sort((a, b) => (b as number) - (a as number)) as number[], [wines]);
 
