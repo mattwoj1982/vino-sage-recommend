@@ -133,8 +133,8 @@ const WineDetail = () => {
                 </h2>
                 <p className="text-muted-foreground">
                   {wine.price_min != null && wine.price_max != null
-                    ? `€ ${Number(wine.price_min).toFixed(2)} – € ${Number(wine.price_max).toFixed(2)}`
-                    : `ca. € ${Number(wine.price_min ?? wine.price_max).toFixed(2)}`}
+                    ? `${Number(wine.price_min).toFixed(2)} – ${Number(wine.price_max).toFixed(2)} CHF`
+                    : `ca. ${Number(wine.price_min ?? wine.price_max).toFixed(2)} CHF`}
                   <span className="text-xs ml-2 opacity-70">(geschätzt, pro 0,75l)</span>
                 </p>
               </div>

@@ -87,13 +87,13 @@ const Dashboard = () => {
               <StatCard icon={<Globe className="w-4 h-4" />} label="Länder" value={stats.countries} />
               <StatCard icon={<Grape className="w-4 h-4" />} label="Rebsorten" value={stats.grapes} />
               <StatCard
-                icon={<span className="text-base leading-none">€</span>}
+                icon={<span className="text-xs font-semibold leading-none">CHF</span>}
                 label="Bestandswert"
                 value={
                   stats.estimatedValueMax > 0
                     ? stats.estimatedValueMin === stats.estimatedValueMax
-                      ? `${stats.estimatedValueMin.toFixed(0)} €`
-                      : `${stats.estimatedValueMin.toFixed(0)}–${stats.estimatedValueMax.toFixed(0)} €`
+                      ? `${stats.estimatedValueMin.toFixed(0)} CHF`
+                      : `${stats.estimatedValueMin.toFixed(0)}–${stats.estimatedValueMax.toFixed(0)} CHF`
                     : "–"
                 }
               />
@@ -207,7 +207,7 @@ const Dashboard = () => {
                           {t.wine.winery && <span className="text-muted-foreground"> · {t.wine.winery}</span>}
                         </span>
                         <span className="text-xs text-muted-foreground whitespace-nowrap tabular-nums">
-                          {t.perBottle.toFixed(0)} € · {t.wine.bottle_count}× · ges. {t.total.toFixed(0)} €
+                          {t.perBottle.toFixed(0)} CHF · {t.wine.bottle_count}× · ges. {t.total.toFixed(0)} CHF
                         </span>
                       </Link>
                     </li>
