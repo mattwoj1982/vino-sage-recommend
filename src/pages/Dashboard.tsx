@@ -207,7 +207,7 @@ const Dashboard = () => {
                           {t.wine.winery && <span className="text-muted-foreground"> · {t.wine.winery}</span>}
                         </span>
                         <span className="text-xs text-muted-foreground whitespace-nowrap tabular-nums">
-                          {t.perBottle.toFixed(0)} CHF · {t.wine.bottle_count}× · ges. {t.total.toFixed(0)} CHF
+                          {t.perBottle.toFixed(0)} EUR · {t.wine.bottle_count}× · ges. {t.total.toFixed(0)} EUR
                         </span>
                       </Link>
                     </li>
