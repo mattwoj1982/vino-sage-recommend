@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
 - konkrete Speisen-Empfehlungen als Fließtext (z.B. "Geschmortes Rind, gereifter Hartkäse, Wildragout")
 - 1-3 passende Kategorien aus der vorgegebenen Liste (für Filterung)
 - ein realistisches Trinkfenster (Jahre)
-- eine realistische Preisspanne in EUR (Endkundenpreis pro 0,75l-Flasche im Fachhandel)
+- eine realistische Preisspanne in CHF (Endkundenpreis pro 0,75l-Flasche im Schweizer Fachhandel)
 
 Nutze AUSSCHLIESSLICH das Tool "wine_profile" — kein Freitext.`;
 
@@ -122,11 +122,11 @@ Nutze AUSSCHLIESSLICH das Tool "wine_profile" — kein Freitext.`;
               },
               price_min: {
                 type: "number",
-                description: "Realistischer Mindestpreis in EUR pro 0,75l-Flasche im Fachhandel.",
+                description: "Realistischer Mindestpreis in CHF pro 0,75l-Flasche im Schweizer Fachhandel.",
               },
               price_max: {
                 type: "number",
-                description: "Realistischer Höchstpreis in EUR pro 0,75l-Flasche im Fachhandel.",
+                description: "Realistischer Höchstpreis in CHF pro 0,75l-Flasche im Schweizer Fachhandel.",
               },
             },
             required: ["description", "food_pairing", "pairing_categories", "drink_from", "drink_to", "price_min", "price_max"],
