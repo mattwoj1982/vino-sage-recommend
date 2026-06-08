@@ -269,7 +269,7 @@ const AlertGroup = ({
                 {a.wine.winery && <span className="text-muted-foreground"> · {a.wine.winery}</span>}
               </span>
               <span className="text-xs text-muted-foreground whitespace-nowrap">
-                {a.message} · {a.wine.bottle_count}×
+                {a.wine.bottle_count}×
               </span>
             </Link>
           </li>
