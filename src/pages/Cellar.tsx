@@ -46,6 +46,7 @@ const Cellar = () => {
   const [wineType, setWineType] = useState("all");
   const [backfilling, setBackfilling] = useState(false);
   const [backfillingTypes, setBackfillingTypes] = useState(false);
+  const [compressing, setCompressing] = useState(false);
 
   const refetchWines = async () => {
     const { data: fresh } = await supabase
@@ -84,6 +85,22 @@ const Cellar = () => {
       toast.error(e.message ?? "Fehler beim Ergänzen der Typen");
     } finally {
       setBackfillingTypes(false);
+    }
+  };
+
+  const compressPhotos = async () => {
+    setCompressing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("compress-existing-photos");
+      if (error) throw error;
+      const d = data as { updated?: number; total?: number; skipped?: number; failed?: number; error?: string };
+      if (d?.error) throw new Error(d.error);
+      toast.success(`Fotos komprimiert: ${d.updated ?? 0} von ${d.total ?? 0}${d.failed ? ` (${d.failed} fehlgeschlagen)` : ""}`);
+      await refetchWines();
+    } catch (e: any) {
+      toast.error(e.message ?? "Fehler beim Komprimieren der Fotos");
+    } finally {
+      setCompressing(false);
     }
   };
 
