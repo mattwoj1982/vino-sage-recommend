@@ -55,7 +55,7 @@ const Cellar = () => {
       toast.success(`Länder ergänzt: ${d.updated ?? 0} von ${d.total ?? 0}${d.failed ? ` (${d.failed} fehlgeschlagen)` : ""}`);
       const { data: fresh } = await supabase
         .from("wines")
-        .select("id, name, winery, vintage, grape_variety, region, country, rating, photo_url, bottle_count, drink_from, drink_to, pairing_categories")
+        .select("id, name, winery, vintage, grape_variety, region, country, rating, photo_url, bottle_count, drink_from, drink_to, pairing_categories, wine_type")
         .order("created_at", { ascending: false });
       if (fresh) setWines(fresh as Wine[]);
     } catch (e: any) {
@@ -74,7 +74,7 @@ const Cellar = () => {
     (async () => {
       const { data, error } = await supabase
         .from("wines")
-        .select("id, name, winery, vintage, grape_variety, region, country, rating, photo_url, bottle_count, drink_from, drink_to, pairing_categories")
+        .select("id, name, winery, vintage, grape_variety, region, country, rating, photo_url, bottle_count, drink_from, drink_to, pairing_categories, wine_type")
         .order("created_at", { ascending: false });
       if (error) toast.error(error.message);
       else setWines((data as Wine[]) ?? []);
