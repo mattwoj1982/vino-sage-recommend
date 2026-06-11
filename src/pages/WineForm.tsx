@@ -209,6 +209,15 @@ const WineForm = () => {
                 <Input id="country" value={form.country} onChange={(e) => setForm(f => ({ ...f, country: e.target.value }))} />
               </div>
               <div>
+                <Label htmlFor="wine_type">Typ</Label>
+                <Select value={form.wine_type || undefined} onValueChange={(v) => setForm(f => ({ ...f, wine_type: v }))}>
+                  <SelectTrigger id="wine_type"><SelectValue placeholder="Weintyp wählen" /></SelectTrigger>
+                  <SelectContent>
+                    {WINE_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
                 <Label htmlFor="bottles">Anzahl Flaschen</Label>
                 <Input id="bottles" type="number" min={0} value={form.bottle_count}
                   onChange={(e) => setForm(f => ({ ...f, bottle_count: parseInt(e.target.value) || 0 }))} />
