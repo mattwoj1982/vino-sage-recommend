@@ -106,6 +106,7 @@ const Cellar = () => {
       if (error) toast.error(error.message);
       else setWines((data as Wine[]) ?? []);
       setLoading(false);
+      refreshUncompressedCount();
     })();
   }, [user]);
 
