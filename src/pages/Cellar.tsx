@@ -26,7 +26,10 @@ interface Wine {
   drink_from: number | null;
   drink_to: number | null;
   pairing_categories: string[] | null;
+  wine_type: string | null;
 }
+
+const WINE_TYPES = ["Weißwein", "Rotwein", "Rosé", "Schaumwein"];
 
 const Cellar = () => {
   const { user, loading: authLoading } = useAuth();
