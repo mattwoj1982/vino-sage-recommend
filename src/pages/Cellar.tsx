@@ -162,6 +162,19 @@ const Cellar = () => {
           </Button>
         )}
 
+        {wines.some(w => !w.wine_type) && (
+          <Button
+            onClick={backfillWineTypes}
+            disabled={backfillingTypes}
+            variant="outline"
+            size="sm"
+            className="w-full sm:w-auto mb-6 sm:ml-2"
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            {backfillingTypes ? "Ergänze Typen per KI..." : `Typen per KI ergänzen (${wines.filter(w => !w.wine_type).length})`}
+          </Button>
+        )}
+
         <div className="flex flex-col gap-3 mb-6">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -173,6 +186,13 @@ const Cellar = () => {
             />
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
+            <Select value={wineType} onValueChange={setWineType}>
+              <SelectTrigger className="bg-card/50"><SelectValue placeholder="Typ" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Typen</SelectItem>
+                {WINE_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+              </SelectContent>
+            </Select>
             <Select value={grape} onValueChange={setGrape}>
               <SelectTrigger className="bg-card/50"><SelectValue placeholder="Rebsorte" /></SelectTrigger>
               <SelectContent>
