@@ -192,6 +192,19 @@ const Cellar = () => {
           </Button>
         )}
 
+        {wines.some(w => w.photo_url) && (
+          <Button
+            onClick={compressPhotos}
+            disabled={compressing}
+            variant="outline"
+            size="sm"
+            className="w-full sm:w-auto mb-6 sm:ml-2"
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            {compressing ? "Komprimiere Fotos..." : "Bestehende Fotos komprimieren"}
+          </Button>
+        )}
+
         <div className="flex flex-col gap-3 mb-6">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
