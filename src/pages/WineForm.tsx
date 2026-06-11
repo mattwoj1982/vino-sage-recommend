@@ -44,7 +44,7 @@ const WineForm = () => {
         name: data.name, winery: data.winery ?? "", vintage: data.vintage?.toString() ?? "",
         grape_variety: data.grape_variety ?? "", region: data.region ?? "", country: data.country ?? "",
         rating: data.rating ?? 0, notes: data.notes ?? "", photo_url: data.photo_url ?? "",
-        bottle_count: data.bottle_count,
+        bottle_count: data.bottle_count, wine_type: (data as any).wine_type ?? "",
       });
     })();
   }, [id, user, isEdit, navigate]);
