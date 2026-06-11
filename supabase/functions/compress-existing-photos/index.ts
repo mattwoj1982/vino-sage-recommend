@@ -1,5 +1,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { decode, Image } from "https://deno.land/x/imagescript@1.2.17/mod.ts";
+import decodeJpeg, { init as initJpegDecode } from "https://esm.sh/@jsquash/jpeg@1.4.0/decode?bundle";
+import encodeJpeg, { init as initJpegEncode } from "https://esm.sh/@jsquash/jpeg@1.4.0/encode?bundle";
+import decodePng, { init as initPngDecode } from "https://esm.sh/@jsquash/png@3.0.1/decode?bundle";
+import resize, { initResize } from "https://esm.sh/@jsquash/resize@2.1.0?bundle";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,6 +16,13 @@ const BUCKET = "wine-photos";
 const MAX_EDGE = 1600;
 const QUALITY = 78;
 
+let wasmReady = false;
+const ensureWasm = async () => {
+  if (wasmReady) return;
+  await Promise.all([initJpegDecode(), initJpegEncode(), initPngDecode(), initResize()]);
+  wasmReady = true;
+};
+
 /** Extract storage path from a stored public/signed URL or a raw path. */
 const extractPath = (value: string | null | undefined): string | null => {
   if (!value) return null;
@@ -20,6 +30,21 @@ const extractPath = (value: string | null | undefined): string | null => {
   const idx = value.indexOf(marker);
   if (idx === -1) return value.startsWith("http") ? null : value;
   return value.substring(idx + marker.length).split("?")[0];
+};
+
+const decodeImage = async (bytes: Uint8Array, path: string): Promise<ImageData | null> => {
+  const lower = path.toLowerCase();
+  try {
+    if (lower.endsWith(".png")) return await decodePng(bytes.buffer);
+    return await decodeJpeg(bytes.buffer);
+  } catch {
+    // Fallback: try the other decoder
+    try {
+      return lower.endsWith(".png") ? await decodeJpeg(bytes.buffer) : await decodePng(bytes.buffer);
+    } catch {
+      return null;
+    }
+  }
 };
 
 Deno.serve(async (req) => {
@@ -37,12 +62,12 @@ Deno.serve(async (req) => {
     const { data: { user } } = await supabase.auth.getUser(token);
     if (!user) return json({ error: "Nicht autorisiert" }, 401);
 
-    // Batch-Größe pro Aufruf, um CPU-Limits zu vermeiden
-    let batchSize = 4;
+    // Eine Datei pro Aufruf, um Speicher-/CPU-Limits zu vermeiden
+    let batchSize = 1;
     try {
       const body = await req.json();
       if (body && Number.isFinite(body.batch_size)) {
-        batchSize = Math.min(10, Math.max(1, Math.floor(body.batch_size)));
+        batchSize = Math.min(3, Math.max(1, Math.floor(body.batch_size)));
       }
     } catch (_e) { /* kein Body -> Default */ }
 
@@ -55,7 +80,6 @@ Deno.serve(async (req) => {
       .limit(batchSize);
     if (error) return json({ error: error.message }, 500);
 
-    // Verbleibende insgesamt (für Fortschritt im Client)
     const { count: remainingBefore } = await supabase
       .from("wines")
       .select("id", { count: "exact", head: true })
@@ -67,11 +91,12 @@ Deno.serve(async (req) => {
       return json({ updated: 0, processed: 0, skipped: 0, failed: 0, remaining: 0, done: true });
     }
 
+    await ensureWasm();
+
     let updated = 0;
     let skipped = 0;
     const failures: string[] = [];
 
-    // Markiert einen Wein als verarbeitet, damit er nicht erneut geprüft wird
     const markDone = async (id: string) => {
       await supabase
         .from("wines")
@@ -90,27 +115,20 @@ Deno.serve(async (req) => {
 
         const originalBytes = new Uint8Array(await blob.arrayBuffer());
 
-        // GIFs / animations werden von Image.decode nicht behandelt -> überspringen
-        let decoded: Image;
-        try {
-          const result = await decode(originalBytes);
-          if (!(result instanceof Image)) { skipped++; await markDone(w.id); continue; }
-          decoded = result;
-        } catch {
-          skipped++;
-          await markDone(w.id);
-          continue;
-        }
+        let image = await decodeImage(originalBytes, path);
+        if (!image) { skipped++; await markDone(w.id); continue; }
 
-        const longEdge = Math.max(decoded.width, decoded.height);
+        const longEdge = Math.max(image.width, image.height);
         if (longEdge > MAX_EDGE) {
           const scale = MAX_EDGE / longEdge;
-          decoded.resize(Math.round(decoded.width * scale), Math.round(decoded.height * scale));
+          image = await resize(image, {
+            width: Math.round(image.width * scale),
+            height: Math.round(image.height * scale),
+          });
         }
 
-        const compressed = await decoded.encodeJPEG(QUALITY);
+        const compressed = new Uint8Array(await encodeJpeg(image, { quality: QUALITY }));
 
-        // Wenn nicht kleiner geworden, Original behalten
         if (compressed.length >= originalBytes.length) { skipped++; await markDone(w.id); continue; }
 
         const newPath = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
@@ -126,12 +144,12 @@ Deno.serve(async (req) => {
           .eq("user_id", user.id);
         if (updErr) { failures.push(w.id); continue; }
 
-        // Altes Bild aufräumen (Fehler ignorieren)
         if (path !== newPath) {
           await supabase.storage.from(BUCKET).remove([path]);
         }
         updated++;
-      } catch (_e) {
+      } catch (e) {
+        console.error("compress failure", w.id, String(e));
         failures.push(w.id);
       }
     }

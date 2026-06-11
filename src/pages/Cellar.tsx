@@ -61,19 +61,25 @@ const Cellar = () => {
   const compressPhotos = async () => {
     setCompressing(true);
     let safety = 200;
+    let totalFailed = 0;
     try {
       while (safety-- > 0) {
         const { data, error } = await supabase.functions.invoke("compress-existing-photos", {
-          body: { batch_size: 4 },
+          body: { batch_size: 1 },
         });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
+        totalFailed += data?.failed ?? 0;
         await refreshUncompressedCount();
         if (data?.done || (data?.processed ?? 0) === 0) break;
       }
       await refetchWines();
       await refreshUncompressedCount();
-      toast.success("Bilder wurden komprimiert.");
+      if (totalFailed > 0) {
+        toast.warning(`${totalFailed} Bild(er) konnten nicht komprimiert werden.`);
+      } else {
+        toast.success("Bilder wurden komprimiert.");
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Fehler bei der Komprimierung");
     } finally {
