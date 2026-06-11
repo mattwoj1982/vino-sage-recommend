@@ -44,6 +44,42 @@ const Cellar = () => {
   const [drinkWindow, setDrinkWindow] = useState<"all" | DrinkStatus>("all");
   const [pairing, setPairing] = useState("all");
   const [wineType, setWineType] = useState("all");
+  const [uncompressed, setUncompressed] = useState(0);
+  const [compressing, setCompressing] = useState(false);
+
+  const refreshUncompressedCount = async () => {
+    if (!user) return;
+    const { count } = await supabase
+      .from("wines")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("photo_compressed", false)
+      .not("photo_url", "is", null);
+    setUncompressed(count ?? 0);
+  };
+
+  const compressPhotos = async () => {
+    setCompressing(true);
+    let safety = 200;
+    try {
+      while (safety-- > 0) {
+        const { data, error } = await supabase.functions.invoke("compress-existing-photos", {
+          body: { batch_size: 4 },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        await refreshUncompressedCount();
+        if (data?.done || (data?.processed ?? 0) === 0) break;
+      }
+      await refetchWines();
+      await refreshUncompressedCount();
+      toast.success("Bilder wurden komprimiert.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Fehler bei der Komprimierung");
+    } finally {
+      setCompressing(false);
+    }
+  };
 
   const refetchWines = async () => {
     const { data: fresh } = await supabase
@@ -70,6 +106,7 @@ const Cellar = () => {
       if (error) toast.error(error.message);
       else setWines((data as Wine[]) ?? []);
       setLoading(false);
+      refreshUncompressedCount();
     })();
   }, [user]);
 
@@ -116,6 +153,21 @@ const Cellar = () => {
           <ChefHat className="w-5 h-5 mr-2" />
           KI-Sommelier: Weine zum Menü finden
         </Button>
+
+        {uncompressed > 0 && (
+          <Button
+            onClick={compressPhotos}
+            disabled={compressing}
+            variant="outline"
+            size="lg"
+            className="w-full sm:w-auto mb-6 sm:ml-3"
+          >
+            <Sparkles className="w-5 h-5 mr-2" />
+            {compressing ? "Komprimiere Bilder..." : `${uncompressed} Bilder komprimieren`}
+          </Button>
+        )}
+
+
 
         <div className="flex flex-col gap-3 mb-6">
           <div className="relative">
