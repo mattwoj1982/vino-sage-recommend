@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ChefHat, Sparkles, Users } from "lucide-react";
+import { ChefHat, Sparkles, Users, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 
 const Sommelier = () => {
@@ -17,6 +17,19 @@ const Sommelier = () => {
   const [guestCount, setGuestCount] = useState<string>("4");
   const [loading, setLoading] = useState(false);
   const [pairing, setPairing] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    if (!pairing) return;
+    try {
+      await navigator.clipboard.writeText(pairing);
+      setCopied(true);
+      toast.success("Menü kopiert");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Kopieren fehlgeschlagen");
+    }
+  };
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -102,6 +115,12 @@ const Sommelier = () => {
 
         {pairing && (
           <div className="mt-8 p-6 rounded-2xl border border-border bg-card/40 backdrop-blur">
+            <div className="flex justify-end mb-3">
+              <Button variant="outline" size="sm" onClick={handleCopy}>
+                {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                {copied ? "Kopiert" : "Menü kopieren"}
+              </Button>
+            </div>
             <div className="prose prose-invert max-w-none whitespace-pre-wrap serif text-base leading-relaxed">
               {pairing}
             </div>
