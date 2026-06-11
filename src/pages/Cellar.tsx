@@ -125,8 +125,9 @@ const Cellar = () => {
     if (vintage !== "all" && String(w.vintage) !== vintage) return false;
     if (drinkWindow !== "all" && getDrinkStatus(w.drink_from, w.drink_to) !== drinkWindow) return false;
     if (pairing !== "all" && !(w.pairing_categories ?? []).includes(pairing)) return false;
+    if (wineType !== "all" && w.wine_type !== wineType) return false;
     return true;
-  }), [wines, search, grape, region, country, vintage, drinkWindow, pairing]);
+  }), [wines, search, grape, region, country, vintage, drinkWindow, pairing, wineType]);
 
   if (authLoading) return null;
 
