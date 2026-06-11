@@ -83,6 +83,7 @@ const WineForm = () => {
         grape_variety: data.grape_variety ?? f.grape_variety,
         region: data.region ?? f.region,
         country: data.country ?? f.country,
+        wine_type: data.wine_type ?? f.wine_type,
       }));
       toast.success("Wein erkannt – Felder ausgefüllt");
     } catch (e: any) {
@@ -93,12 +94,12 @@ const WineForm = () => {
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
+    const original = e.target.files?.[0];
+    if (!original || !user) return;
     setUploading(true);
-    const ext = file.name.split(".").pop();
-    const path = `${user.id}/${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("wine-photos").upload(path, file);
+    const file = await compressImage(original);
+    const path = `${user.id}/${Date.now()}.jpg`;
+    const { error } = await supabase.storage.from("wine-photos").upload(path, file, { contentType: file.type });
     if (error) { toast.error(error.message); setUploading(false); return; }
     // Store the storage path; signed URLs are generated on demand for display.
     setForm(f => ({ ...f, photo_url: path }));
@@ -124,6 +125,7 @@ const WineForm = () => {
       notes: form.notes || null,
       photo_url: form.photo_url || null,
       bottle_count: form.bottle_count,
+      wine_type: form.wine_type || null,
     };
     const res = isEdit
       ? await supabase.from("wines").update(payload).eq("id", id!)
