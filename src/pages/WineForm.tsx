@@ -12,6 +12,10 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { ArrowLeft, Upload, Trash2, Sparkles } from "lucide-react";
 import { WinePhoto } from "@/components/WinePhoto";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { compressImage } from "@/lib/imageCompress";
+
+const WINE_TYPES = ["Weißwein", "Rotwein", "Rosé", "Schaumwein"];
 
 const WineForm = () => {
   const { id } = useParams();
@@ -24,7 +28,7 @@ const WineForm = () => {
 
   const [form, setForm] = useState({
     name: "", winery: "", vintage: "", grape_variety: "", region: "", country: "",
-    rating: 0, notes: "", photo_url: "", bottle_count: 1,
+    rating: 0, notes: "", photo_url: "", bottle_count: 1, wine_type: "",
   });
 
   useEffect(() => {
