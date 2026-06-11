@@ -44,9 +44,6 @@ const Cellar = () => {
   const [drinkWindow, setDrinkWindow] = useState<"all" | DrinkStatus>("all");
   const [pairing, setPairing] = useState("all");
   const [wineType, setWineType] = useState("all");
-  const [backfilling, setBackfilling] = useState(false);
-  const [backfillingTypes, setBackfillingTypes] = useState(false);
-  const [compressing, setCompressing] = useState(false);
 
   const refetchWines = async () => {
     const { data: fresh } = await supabase
