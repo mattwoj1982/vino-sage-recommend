@@ -166,45 +166,6 @@ const Cellar = () => {
           KI-Sommelier: Weine zum Menü finden
         </Button>
 
-        {wines.some(w => !w.country) && (
-          <Button
-            onClick={backfillCountries}
-            disabled={backfilling}
-            variant="outline"
-            size="sm"
-            className="w-full sm:w-auto mb-6 sm:ml-2"
-          >
-            <Sparkles className="w-4 h-4 mr-2" />
-            {backfilling ? "Ergänze Länder per KI..." : `Länder per KI ergänzen (${wines.filter(w => !w.country).length})`}
-          </Button>
-        )}
-
-        {wines.some(w => !w.wine_type) && (
-          <Button
-            onClick={backfillWineTypes}
-            disabled={backfillingTypes}
-            variant="outline"
-            size="sm"
-            className="w-full sm:w-auto mb-6 sm:ml-2"
-          >
-            <Sparkles className="w-4 h-4 mr-2" />
-            {backfillingTypes ? "Ergänze Typen per KI..." : `Typen per KI ergänzen (${wines.filter(w => !w.wine_type).length})`}
-          </Button>
-        )}
-
-        {wines.some(w => w.photo_url) && (
-          <Button
-            onClick={compressPhotos}
-            disabled={compressing}
-            variant="outline"
-            size="sm"
-            className="w-full sm:w-auto mb-6 sm:ml-2"
-          >
-            <Sparkles className="w-4 h-4 mr-2" />
-            {compressing ? "Komprimiere Fotos..." : "Bestehende Fotos komprimieren"}
-          </Button>
-        )}
-
         <div className="flex flex-col gap-3 mb-6">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
