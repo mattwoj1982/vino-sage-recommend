@@ -185,6 +185,7 @@ export type Database = {
           updated_at: string
           user_id: string
           vintage: number | null
+          wine_type: string | null
           winery: string | null
         }
         Insert: {
@@ -208,6 +209,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           vintage?: number | null
+          wine_type?: string | null
           winery?: string | null
         }
         Update: {
@@ -231,6 +233,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           vintage?: number | null
+          wine_type?: string | null
           winery?: string | null
         }
         Relationships: []
@@ -273,6 +276,7 @@ export type Database = {
           updated_at: string
           user_id: string
           vintage: number | null
+          wine_type: string | null
           winery: string | null
         }[]
         SetofOptions: {

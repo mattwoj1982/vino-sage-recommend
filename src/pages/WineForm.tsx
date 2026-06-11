@@ -12,6 +12,10 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { ArrowLeft, Upload, Trash2, Sparkles } from "lucide-react";
 import { WinePhoto } from "@/components/WinePhoto";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { compressImage } from "@/lib/imageCompress";
+
+const WINE_TYPES = ["Weißwein", "Rotwein", "Rosé", "Schaumwein"];
 
 const WineForm = () => {
   const { id } = useParams();
@@ -24,7 +28,7 @@ const WineForm = () => {
 
   const [form, setForm] = useState({
     name: "", winery: "", vintage: "", grape_variety: "", region: "", country: "",
-    rating: 0, notes: "", photo_url: "", bottle_count: 1,
+    rating: 0, notes: "", photo_url: "", bottle_count: 1, wine_type: "",
   });
 
   useEffect(() => {
@@ -40,7 +44,7 @@ const WineForm = () => {
         name: data.name, winery: data.winery ?? "", vintage: data.vintage?.toString() ?? "",
         grape_variety: data.grape_variety ?? "", region: data.region ?? "", country: data.country ?? "",
         rating: data.rating ?? 0, notes: data.notes ?? "", photo_url: data.photo_url ?? "",
-        bottle_count: data.bottle_count,
+        bottle_count: data.bottle_count, wine_type: (data as any).wine_type ?? "",
       });
     })();
   }, [id, user, isEdit, navigate]);
@@ -79,6 +83,7 @@ const WineForm = () => {
         grape_variety: data.grape_variety ?? f.grape_variety,
         region: data.region ?? f.region,
         country: data.country ?? f.country,
+        wine_type: data.wine_type ?? f.wine_type,
       }));
       toast.success("Wein erkannt – Felder ausgefüllt");
     } catch (e: any) {
@@ -89,12 +94,12 @@ const WineForm = () => {
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
+    const original = e.target.files?.[0];
+    if (!original || !user) return;
     setUploading(true);
-    const ext = file.name.split(".").pop();
-    const path = `${user.id}/${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("wine-photos").upload(path, file);
+    const file = await compressImage(original);
+    const path = `${user.id}/${Date.now()}.jpg`;
+    const { error } = await supabase.storage.from("wine-photos").upload(path, file, { contentType: file.type });
     if (error) { toast.error(error.message); setUploading(false); return; }
     // Store the storage path; signed URLs are generated on demand for display.
     setForm(f => ({ ...f, photo_url: path }));
@@ -120,6 +125,7 @@ const WineForm = () => {
       notes: form.notes || null,
       photo_url: form.photo_url || null,
       bottle_count: form.bottle_count,
+      wine_type: form.wine_type || null,
     };
     const res = isEdit
       ? await supabase.from("wines").update(payload).eq("id", id!)
@@ -201,6 +207,15 @@ const WineForm = () => {
               <div>
                 <Label htmlFor="country">Land</Label>
                 <Input id="country" value={form.country} onChange={(e) => setForm(f => ({ ...f, country: e.target.value }))} />
+              </div>
+              <div>
+                <Label htmlFor="wine_type">Typ</Label>
+                <Select value={form.wine_type || undefined} onValueChange={(v) => setForm(f => ({ ...f, wine_type: v }))}>
+                  <SelectTrigger id="wine_type"><SelectValue placeholder="Weintyp wählen" /></SelectTrigger>
+                  <SelectContent>
+                    {WINE_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="bottles">Anzahl Flaschen</Label>

@@ -26,7 +26,10 @@ interface Wine {
   drink_from: number | null;
   drink_to: number | null;
   pairing_categories: string[] | null;
+  wine_type: string | null;
 }
+
+const WINE_TYPES = ["Weißwein", "Rotwein", "Rosé", "Schaumwein"];
 
 const Cellar = () => {
   const { user, loading: authLoading } = useAuth();
@@ -40,7 +43,17 @@ const Cellar = () => {
   const [vintage, setVintage] = useState("all");
   const [drinkWindow, setDrinkWindow] = useState<"all" | DrinkStatus>("all");
   const [pairing, setPairing] = useState("all");
+  const [wineType, setWineType] = useState("all");
   const [backfilling, setBackfilling] = useState(false);
+  const [backfillingTypes, setBackfillingTypes] = useState(false);
+
+  const refetchWines = async () => {
+    const { data: fresh } = await supabase
+      .from("wines")
+      .select("id, name, winery, vintage, grape_variety, region, country, rating, photo_url, bottle_count, drink_from, drink_to, pairing_categories, wine_type")
+      .order("created_at", { ascending: false });
+    if (fresh) setWines(fresh as Wine[]);
+  };
 
   const backfillCountries = async () => {
     setBackfilling(true);
@@ -50,17 +63,30 @@ const Cellar = () => {
       const d = data as { updated?: number; total?: number; failed?: number; error?: string };
       if (d?.error) throw new Error(d.error);
       toast.success(`Länder ergänzt: ${d.updated ?? 0} von ${d.total ?? 0}${d.failed ? ` (${d.failed} fehlgeschlagen)` : ""}`);
-      const { data: fresh } = await supabase
-        .from("wines")
-        .select("id, name, winery, vintage, grape_variety, region, country, rating, photo_url, bottle_count, drink_from, drink_to, pairing_categories")
-        .order("created_at", { ascending: false });
-      if (fresh) setWines(fresh as Wine[]);
+      await refetchWines();
     } catch (e: any) {
       toast.error(e.message ?? "Fehler beim Ergänzen der Länder");
     } finally {
       setBackfilling(false);
     }
   };
+
+  const backfillWineTypes = async () => {
+    setBackfillingTypes(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("backfill-wine-types");
+      if (error) throw error;
+      const d = data as { updated?: number; total?: number; failed?: number; error?: string };
+      if (d?.error) throw new Error(d.error);
+      toast.success(`Typen ergänzt: ${d.updated ?? 0} von ${d.total ?? 0}${d.failed ? ` (${d.failed} fehlgeschlagen)` : ""}`);
+      await refetchWines();
+    } catch (e: any) {
+      toast.error(e.message ?? "Fehler beim Ergänzen der Typen");
+    } finally {
+      setBackfillingTypes(false);
+    }
+  };
+
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -71,7 +97,7 @@ const Cellar = () => {
     (async () => {
       const { data, error } = await supabase
         .from("wines")
-        .select("id, name, winery, vintage, grape_variety, region, country, rating, photo_url, bottle_count, drink_from, drink_to, pairing_categories")
+        .select("id, name, winery, vintage, grape_variety, region, country, rating, photo_url, bottle_count, drink_from, drink_to, pairing_categories, wine_type")
         .order("created_at", { ascending: false });
       if (error) toast.error(error.message);
       else setWines((data as Wine[]) ?? []);
@@ -99,8 +125,9 @@ const Cellar = () => {
     if (vintage !== "all" && String(w.vintage) !== vintage) return false;
     if (drinkWindow !== "all" && getDrinkStatus(w.drink_from, w.drink_to) !== drinkWindow) return false;
     if (pairing !== "all" && !(w.pairing_categories ?? []).includes(pairing)) return false;
+    if (wineType !== "all" && w.wine_type !== wineType) return false;
     return true;
-  }), [wines, search, grape, region, country, vintage, drinkWindow, pairing]);
+  }), [wines, search, grape, region, country, vintage, drinkWindow, pairing, wineType]);
 
   if (authLoading) return null;
 
@@ -135,6 +162,19 @@ const Cellar = () => {
           </Button>
         )}
 
+        {wines.some(w => !w.wine_type) && (
+          <Button
+            onClick={backfillWineTypes}
+            disabled={backfillingTypes}
+            variant="outline"
+            size="sm"
+            className="w-full sm:w-auto mb-6 sm:ml-2"
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            {backfillingTypes ? "Ergänze Typen per KI..." : `Typen per KI ergänzen (${wines.filter(w => !w.wine_type).length})`}
+          </Button>
+        )}
+
         <div className="flex flex-col gap-3 mb-6">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -146,6 +186,13 @@ const Cellar = () => {
             />
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
+            <Select value={wineType} onValueChange={setWineType}>
+              <SelectTrigger className="bg-card/50"><SelectValue placeholder="Typ" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Typen</SelectItem>
+                {WINE_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+              </SelectContent>
+            </Select>
             <Select value={grape} onValueChange={setGrape}>
               <SelectTrigger className="bg-card/50"><SelectValue placeholder="Rebsorte" /></SelectTrigger>
               <SelectContent>
