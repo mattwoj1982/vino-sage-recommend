@@ -17,6 +17,19 @@ const Sommelier = () => {
   const [guestCount, setGuestCount] = useState<string>("4");
   const [loading, setLoading] = useState(false);
   const [pairing, setPairing] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    if (!pairing) return;
+    try {
+      await navigator.clipboard.writeText(pairing);
+      setCopied(true);
+      toast.success("Menü kopiert");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Kopieren fehlgeschlagen");
+    }
+  };
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
