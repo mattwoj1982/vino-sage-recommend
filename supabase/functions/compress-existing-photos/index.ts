@@ -37,25 +37,56 @@ Deno.serve(async (req) => {
     const { data: { user } } = await supabase.auth.getUser(token);
     if (!user) return json({ error: "Nicht autorisiert" }, 401);
 
+    // Batch-Größe pro Aufruf, um CPU-Limits zu vermeiden
+    let batchSize = 4;
+    try {
+      const body = await req.json();
+      if (body && Number.isFinite(body.batch_size)) {
+        batchSize = Math.min(10, Math.max(1, Math.floor(body.batch_size)));
+      }
+    } catch (_e) { /* kein Body -> Default */ }
+
     const { data: wines, error } = await supabase
       .from("wines")
       .select("id, photo_url")
       .eq("user_id", user.id)
-      .not("photo_url", "is", null);
+      .eq("photo_compressed", false)
+      .not("photo_url", "is", null)
+      .limit(batchSize);
     if (error) return json({ error: error.message }, 500);
-    if (!wines || wines.length === 0) return json({ updated: 0, total: 0, skipped: 0 });
+
+    // Verbleibende insgesamt (für Fortschritt im Client)
+    const { count: remainingBefore } = await supabase
+      .from("wines")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("photo_compressed", false)
+      .not("photo_url", "is", null);
+
+    if (!wines || wines.length === 0) {
+      return json({ updated: 0, processed: 0, skipped: 0, failed: 0, remaining: 0, done: true });
+    }
 
     let updated = 0;
     let skipped = 0;
     const failures: string[] = [];
 
+    // Markiert einen Wein als verarbeitet, damit er nicht erneut geprüft wird
+    const markDone = async (id: string) => {
+      await supabase
+        .from("wines")
+        .update({ photo_compressed: true })
+        .eq("id", id)
+        .eq("user_id", user.id);
+    };
+
     for (const w of wines) {
       const path = extractPath(w.photo_url);
-      if (!path) { skipped++; continue; }
+      if (!path) { skipped++; await markDone(w.id); continue; }
 
       try {
         const { data: blob, error: dlErr } = await supabase.storage.from(BUCKET).download(path);
-        if (dlErr || !blob) { failures.push(w.id); continue; }
+        if (dlErr || !blob) { failures.push(w.id); await markDone(w.id); continue; }
 
         const originalBytes = new Uint8Array(await blob.arrayBuffer());
 
@@ -63,10 +94,11 @@ Deno.serve(async (req) => {
         let decoded: Image;
         try {
           const result = await decode(originalBytes);
-          if (!(result instanceof Image)) { skipped++; continue; }
+          if (!(result instanceof Image)) { skipped++; await markDone(w.id); continue; }
           decoded = result;
         } catch {
           skipped++;
+          await markDone(w.id);
           continue;
         }
 
@@ -79,7 +111,7 @@ Deno.serve(async (req) => {
         const compressed = await decoded.encodeJPEG(QUALITY);
 
         // Wenn nicht kleiner geworden, Original behalten
-        if (compressed.length >= originalBytes.length) { skipped++; continue; }
+        if (compressed.length >= originalBytes.length) { skipped++; await markDone(w.id); continue; }
 
         const newPath = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
         const { error: upErr } = await supabase.storage
@@ -89,7 +121,7 @@ Deno.serve(async (req) => {
 
         const { error: updErr } = await supabase
           .from("wines")
-          .update({ photo_url: newPath })
+          .update({ photo_url: newPath, photo_compressed: true })
           .eq("id", w.id)
           .eq("user_id", user.id);
         if (updErr) { failures.push(w.id); continue; }
@@ -104,7 +136,15 @@ Deno.serve(async (req) => {
       }
     }
 
-    return json({ updated, total: wines.length, skipped, failed: failures.length });
+    const remaining = Math.max(0, (remainingBefore ?? wines.length) - wines.length);
+    return json({
+      updated,
+      processed: wines.length,
+      skipped,
+      failed: failures.length,
+      remaining,
+      done: remaining === 0,
+    });
   } catch (e) {
     console.error("compress-existing-photos error", e);
     return json({ error: String(e) }, 500);
