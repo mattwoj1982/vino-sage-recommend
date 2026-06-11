@@ -1,0 +1,1 @@
+ALTER TABLE public.wines ADD COLUMN IF NOT EXISTS wine_type text;
