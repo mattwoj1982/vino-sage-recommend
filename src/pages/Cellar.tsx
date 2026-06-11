@@ -43,7 +43,17 @@ const Cellar = () => {
   const [vintage, setVintage] = useState("all");
   const [drinkWindow, setDrinkWindow] = useState<"all" | DrinkStatus>("all");
   const [pairing, setPairing] = useState("all");
+  const [wineType, setWineType] = useState("all");
   const [backfilling, setBackfilling] = useState(false);
+  const [backfillingTypes, setBackfillingTypes] = useState(false);
+
+  const refetchWines = async () => {
+    const { data: fresh } = await supabase
+      .from("wines")
+      .select("id, name, winery, vintage, grape_variety, region, country, rating, photo_url, bottle_count, drink_from, drink_to, pairing_categories, wine_type")
+      .order("created_at", { ascending: false });
+    if (fresh) setWines(fresh as Wine[]);
+  };
 
   const backfillCountries = async () => {
     setBackfilling(true);
@@ -53,17 +63,30 @@ const Cellar = () => {
       const d = data as { updated?: number; total?: number; failed?: number; error?: string };
       if (d?.error) throw new Error(d.error);
       toast.success(`Länder ergänzt: ${d.updated ?? 0} von ${d.total ?? 0}${d.failed ? ` (${d.failed} fehlgeschlagen)` : ""}`);
-      const { data: fresh } = await supabase
-        .from("wines")
-        .select("id, name, winery, vintage, grape_variety, region, country, rating, photo_url, bottle_count, drink_from, drink_to, pairing_categories, wine_type")
-        .order("created_at", { ascending: false });
-      if (fresh) setWines(fresh as Wine[]);
+      await refetchWines();
     } catch (e: any) {
       toast.error(e.message ?? "Fehler beim Ergänzen der Länder");
     } finally {
       setBackfilling(false);
     }
   };
+
+  const backfillWineTypes = async () => {
+    setBackfillingTypes(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("backfill-wine-types");
+      if (error) throw error;
+      const d = data as { updated?: number; total?: number; failed?: number; error?: string };
+      if (d?.error) throw new Error(d.error);
+      toast.success(`Typen ergänzt: ${d.updated ?? 0} von ${d.total ?? 0}${d.failed ? ` (${d.failed} fehlgeschlagen)` : ""}`);
+      await refetchWines();
+    } catch (e: any) {
+      toast.error(e.message ?? "Fehler beim Ergänzen der Typen");
+    } finally {
+      setBackfillingTypes(false);
+    }
+  };
+
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
