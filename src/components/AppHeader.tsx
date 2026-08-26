@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Wine, LogOut, Sparkles, Share2, Plus, BookOpen, LayoutDashboard } from "lucide-react";
+import { Wine, LogOut, Sparkles, Share2, Plus, BookOpen, LayoutDashboard, FileText } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 
@@ -28,6 +28,10 @@ export const AppHeader = () => {
           <Button variant="ghost" size="sm" onClick={() => navigate("/recommend")}>
             <Sparkles className="w-4 h-4 sm:mr-2" />
             <span className="hidden sm:inline">KI-Empfehlung</span>
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => navigate("/report")}>
+            <FileText className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Report</span>
           </Button>
           <Button variant="ghost" size="sm" onClick={() => navigate("/share")}>
             <Share2 className="w-4 h-4 sm:mr-2" />
