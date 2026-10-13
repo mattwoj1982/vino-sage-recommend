@@ -11,6 +11,8 @@ import { Search, Wine as WineIcon, Plus, ChefHat, Sparkles } from "lucide-react"
 import { toast } from "sonner";
 import { getDrinkStatus, type DrinkStatus } from "@/lib/drinkWindow";
 import { PAIRING_CATEGORIES, pairingCategoryEmoji } from "@/lib/pairingCategories";
+import { compressImage } from "@/lib/imageCompress";
+import { extractPhotoPath } from "@/lib/winePhoto";
 
 interface Wine {
   id: string;
@@ -59,26 +61,56 @@ const Cellar = () => {
   };
 
   const compressPhotos = async () => {
+    if (!user) return;
     setCompressing(true);
-    let safety = 200;
     let totalFailed = 0;
+    let totalDone = 0;
     try {
-      while (safety-- > 0) {
-        const { data, error } = await supabase.functions.invoke("compress-existing-photos", {
-          body: { batch_size: 1 },
-        });
-        if (error) throw error;
-        if (data?.error) throw new Error(data.error);
-        totalFailed += data?.failed ?? 0;
-        await refreshUncompressedCount();
-        if (data?.done || (data?.processed ?? 0) === 0) break;
+      const { data: pending, error } = await supabase
+        .from("wines")
+        .select("id, photo_url")
+        .eq("user_id", user.id)
+        .eq("photo_compressed", false)
+        .not("photo_url", "is", null);
+      if (error) throw error;
+
+      for (const w of pending ?? []) {
+        const markDone = () =>
+          supabase.from("wines").update({ photo_compressed: true }).eq("id", w.id);
+        try {
+          const path = extractPhotoPath(w.photo_url);
+          if (!path) { await markDone(); continue; }
+          const { data: blob, error: dlErr } = await supabase.storage.from("wine-photos").download(path);
+          if (dlErr || !blob) { totalFailed++; continue; }
+          const original = new File([blob], path.split("/").pop() || "foto.jpg", { type: blob.type || "image/jpeg" });
+          const compressed = await compressImage(original);
+          if (compressed === original || compressed.size >= original.size) {
+            await markDone();
+          } else {
+            const newPath = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+            const { error: upErr } = await supabase.storage
+              .from("wine-photos")
+              .upload(newPath, compressed, { contentType: "image/jpeg" });
+            if (upErr) { totalFailed++; continue; }
+            const { error: updErr } = await supabase
+              .from("wines")
+              .update({ photo_url: newPath, photo_compressed: true })
+              .eq("id", w.id);
+            if (updErr) { totalFailed++; continue; }
+            await supabase.storage.from("wine-photos").remove([path]);
+          }
+          totalDone++;
+          setUncompressed((n) => Math.max(0, n - 1));
+        } catch {
+          totalFailed++;
+        }
       }
       await refetchWines();
       await refreshUncompressedCount();
       if (totalFailed > 0) {
-        toast.warning(`${totalFailed} Bild(er) konnten nicht komprimiert werden.`);
+        toast.warning(`${totalDone} Bild(er) komprimiert, ${totalFailed} fehlgeschlagen.`);
       } else {
-        toast.success("Bilder wurden komprimiert.");
+        toast.success(`${totalDone} Bild(er) wurden komprimiert.`);
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Fehler bei der Komprimierung");
